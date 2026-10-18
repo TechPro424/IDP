@@ -1,0 +1,14 @@
+{
+  "name": "slop-filter-features",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'build features (placeholder)'",
+    "test": "ts-node tests/test.ts"
+  },
+  "devDependencies": {
+    "fft-js": "^2.0.0",
+    "meyda": "^3.0.0",
+    "ts-node": "^10.9.2"
+  }
+}

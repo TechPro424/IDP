@@ -1,0 +1,9 @@
+{
+  "audio": {
+    "minSpeechSeconds": 5
+  },
+  "visual": {
+    "downsampleWidth": 64,
+    "downsampleHeight": 36
+  }
+}

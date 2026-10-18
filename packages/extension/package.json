@@ -1,0 +1,12 @@
+{
+  "name": "slop-filter-extension",
+  "version": "0.1.0",
+  "main": "background.js",
+  "scripts": {
+    "build": "echo 'build extension (placeholder)'"
+  },
+  "dependencies": {
+    "slop-filter-features": "workspace:*"
+  },
+  "devDependencies": {}
+}

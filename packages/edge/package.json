@@ -1,0 +1,9 @@
+{
+  "name": "slop-filter-edge",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "scripts": {
+    "build": "echo 'build edge (placeholder)'"
+  },
+  "devDependencies": {}
+}
