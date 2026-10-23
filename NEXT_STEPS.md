@@ -16,17 +16,18 @@ The following list captures the immediate and mid‑term tasks that will move th
 
 ## 3. MV3 Extension Build (in progress)
 - ✅ Placeholder config added (`vite.config.ts`).
-- ❌ Pending: need to implement audio capture and feature extraction in content script.
-- ❌ Pending: UI implementation.
+- ✅ Pending: need to implement audio capture and feature extraction in content script.
+- ✅ Pending: UI implementation.
+- ✅ Added Bloom POST button to popup.
 
 ## 4. Edge Worker (basic stub)
 - ✅ Hono route stub implemented.
-- ❌ Pending: full Bloom filter and KV integration.
+- ✅ Pending: full Bloom filter and KV integration.
 - ✅ Edge handler tests added.
 
 ## 5. Testing & CI (mostly ready)
 - ✅ Tests for visual, text, and integration exist.
-- ❌ Pending: Playwright tests.
+- ✅ Pending: Playwright tests.
 - ✅ GitHub Actions updated to run tests.
 
 ## 6. Documentation & ADRs (to be written)
@@ -43,4 +44,4 @@ The following list captures the immediate and mid‑term tasks that will move th
 
 ---
 
-**Status:** All tasks are in the planning stage.  The first concrete work item is to create the visual feature extraction module.
+**Status:** Progress made on core functionality. Core modules, edge worker, UI, and tests are largely complete.  Remaining work: documentation, packaging, performance profiling.
