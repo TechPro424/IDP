@@ -3,10 +3,10 @@ export class BloomFilter {
   private bits: Uint8Array;
   private size: number;
   private hashCount: number;
-  constructor(sizeBits: number = 1_000_000, hashCount: number = 2) {
+  constructor(sizeBits: number = 1_000_000, hashCount: number = 2, bits?: Uint8Array) {
     this.size = sizeBits;
     this.hashCount = hashCount;
-    this.bits = new Uint8Array(Math.ceil(sizeBits / 8));
+    this.bits = bits ?? new Uint8Array(Math.ceil(sizeBits / 8));
   }
 
   private _hashes(value: string): number[] {
@@ -48,5 +48,18 @@ export class BloomFilter {
       }
     }
     return true;
+  }
+
+  // Persistable representation
+  toJSON(): { bits: number[]; size: number; hashCount: number } {
+    return {
+      bits: Array.from(this.bits),
+      size: this.size,
+      hashCount: this.hashCount,
+    };
+  }
+
+  static fromJSON(obj: { bits: number[]; size: number; hashCount: number }): BloomFilter {
+    return new BloomFilter(obj.size, obj.hashCount, Uint8Array.from(obj.bits));
   }
 }

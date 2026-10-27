@@ -1,0 +1,40 @@
+name: Performance Report
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+      - name: Build extensions and edge worker
+        run: pnpm run build
+      - name: Run feature benchmark
+        run: node packages/features/scripts/benchmark.ts > feature-output.txt
+        id: feature
+      - name: Run edge benchmark
+        run: node packages/edge/scripts/benchmark.js > edge-output.txt
+        id: edge
+      - name: Collect report
+        run: |
+          echo "Feature benchmark output:" > performance-report.txt
+          cat feature-output.txt >> performance-report.txt
+          echo "\nEdge benchmark output:" >> performance-report.txt
+          cat edge-output.txt >> performance-report.txt
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance-report.txt

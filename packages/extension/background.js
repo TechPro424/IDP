@@ -39,21 +39,12 @@ chrome.action.onClicked.addListener(async () => {
     console.error('Audio capture failed:', e);
   }
 });
-chrome.action.onClicked.addListener(async () => {
-  try {
-    const stream = await chrome.tabCapture.capture({ audio: true, video: false });
-    console.log('Captured audio stream:', stream);
-    // TODO: process stream into audio buffer and send to content script
-  } catch (e) {
-    console.error('Audio capture failed:', e);
-  }
-});
+// Removed duplicate onClicked listener
 
 // Handle messages from popup or content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'addPrefix') {
     // Existing addPrefix handling
-    // Forward to worker endpoint
     fetch('https://example.com/v1/bucket/' + encodeURIComponent(message.prefix), {
       method: 'POST'
     })
@@ -66,11 +57,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.error('Error adding prefix:', err);
         sendResponse({ status: 'error', error: err.toString() });
       });
-    return true; // async response
+    return true;
   }
   if (message.type === 'bloomFilter') {
-    // Trigger Bloom filter POST
-    fetch('https://example.com/v1/bloom', {
+    fetch('https://example.com/v1/bucket/' + encodeURIComponent(message.prefix), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prefix: message.prefix })
@@ -86,38 +76,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true;
   }
+  if (message.type === 'extractFeatures') {
+    const { features } = message;
+    console.log('Background received features:', features);
+    sendResponse({ status: 'featuresReceived', featureCount: Object.keys(features).length });
+    return true;
+  }
   if (message.type === 'audioCapture') {
-    // Received audio buffer from content script
     const { audio, sampleRate } = message;
     console.log('Background received audio buffer of length', audio.length, 'sampleRate', sampleRate);
-    // For now just acknowledge. In future, forward to worker or store.
     sendResponse({ status: 'received', length: audio.length });
+    return true;
+  }
+  if (message.type === 'allowShow') {
+    // In a real implementation we'd record that user allowed this video
+    console.log('User allowed to show slop');
+    sendResponse({ status: 'allowed' });
     return true;
   }
   return false;
 });
-    // Forward to worker endpoint
-    fetch('https://example.com/v1/bucket/' + encodeURIComponent(message.prefix), {
-      method: 'POST'
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('Worker added prefix:', data);
-        sendResponse({ status: 'added', data });
-      })
-      .catch((err) => {
-        console.error('Error adding prefix:', err);
-        sendResponse({ status: 'error', error: err.toString() });
-      });
-    return true; // async response
-  }
-  if (message.type === 'audioCapture') {
-    // Received audio buffer from content script
-    const { audio, sampleRate } = message;
-    console.log('Background received audio buffer of length', audio.length, 'sampleRate', sampleRate);
-    // For now just acknowledge. In future, forward to worker or store.
-    sendResponse({ status: 'received', length: audio.length });
-    return true;
-  }
-  return false;
-});
+

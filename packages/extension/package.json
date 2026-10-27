@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "main": "background.js",
   "scripts": {
-    "build": "echo 'build extension (placeholder)'"
+    "build": "vite build",
+    "test:e2e": "playwright test",
+    "package:chrome": "zip -r dist_chrome.zip -j dist",
+    "package:firefox": "zip -r dist_firefox.zip -j dist"
   },
   "dependencies": {
     "slop-filter-features": "workspace:*"

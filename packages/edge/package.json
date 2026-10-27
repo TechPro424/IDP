@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "main": "index.ts",
   "scripts": {
-    "build": "echo 'build edge (placeholder)'"
+    "build": "echo 'build edge (placeholder)'",
+    "benchmark:edge": "node scripts/benchmark-edge.js"
   },
   "devDependencies": {}
 }

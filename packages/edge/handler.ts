@@ -4,20 +4,41 @@ import { BloomFilter } from './bloomFilter';
 
 const app = new Hono();
 
-// Simple in‑memory KV placeholder (in real worker, use env KV namespace)
-const kv = new Map<string, boolean>();
+// KV abstraction for Map or Cloudflare KV
+interface KVStore {
+  get(key: string): Promise<string | undefined>;
+  put(key: string, value: string): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+// Detect Cloudflare KV namespace
+const kv: KVStore = typeof globalThis !== 'undefined' && 'KV_NAMESPACE' in globalThis
+  ? (globalThis as any).KV_NAMESPACE as KVStore
+  : {
+      get: async (k) => (globalThis as any).kv?.get(k),
+      put: async (k, v) => (globalThis as any).kv?.put(k, v),
+      delete: async (k) => (globalThis as any).kv?.delete(k),
+    };
 
-// Bloom filter instance shared across requests (not persisted across worker restarts)
-const bloom = new BloomFilter();
+// Load Bloom filter from KV or create new
+let bloom = new BloomFilter();
+const BLOOM_KEY = 'slop_filter_bloom';
+(async () => {
+  const data = await kv.get(BLOOM_KEY);
+  if (data) bloom = BloomFilter.fromJSON(JSON.parse(data));
+})();
+
+// Helper to persist bloom after mutation
+const persistBloom = async () => {
+  await kv.put(BLOOM_KEY, JSON.stringify(bloom.toJSON()));
+};
 
 app.get('/v1/bucket/:prefix', async (c) => {
   const prefix = c.req.param('prefix');
-  // Check Bloom filter first
   if (bloom.test(prefix)) {
     return c.json({ verdict: 'BLOCK' });
   }
-  // If not in Bloom, check KV as a more accurate fallback
-  if (kv.get(prefix)) {
+  const kvVal = await kv.get(prefix);
+  if (kvVal === 'true') {
     return c.json({ verdict: 'BLOCK' });
   }
   return c.json({ verdict: 'ALLOW' });
@@ -25,9 +46,18 @@ app.get('/v1/bucket/:prefix', async (c) => {
 
 app.post('/v1/bucket/:prefix', async (c) => {
   const prefix = c.req.param('prefix');
-  // Add to Bloom and KV to mark as blocked
   bloom.add(prefix);
-  kv.set(prefix, true);
+  await kv.put(prefix, 'true');
+  await persistBloom();
+  return c.json({ status: 'added' });
+});
+
+app.get('/health', async () => ({ status: 'ok' }));
+
+  const prefix = c.req.param('prefix');
+  bloom.add(prefix);
+  await kv.put(prefix, 'true');
+  await persistBloom();
   return c.json({ status: 'added' });
 });
 

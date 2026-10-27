@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -F extension build && pnpm -F edge build",
     "test": "ts-node -r ts-node/register packages/**/tests/*.ts",
+    "test:e2e": "pnpm -F extension run test:e2e"
     "test:e2e": "playwright test"
   },
   "devDependencies": {
