@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "main": "index.ts",
   "scripts": {
-    "build": "echo 'build scoring (placeholder)'"
+    "build": "tsc"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
 }
