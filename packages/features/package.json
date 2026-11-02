@@ -7,7 +7,7 @@
     "test": "ts-node tests/test.ts"
   },
   "devDependencies": {
-    "fft-js": "^2.0.0",
+    "fft-js": "^0.0.12",
     "meyda": "^3.0.0",
     "ts-node": "^10.9.2"
   }
