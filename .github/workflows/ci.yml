@@ -33,6 +33,8 @@ jobs:
         with:
           version: 8
 
+      - name: Generate pnpm lockfile
+        run: pnpm install --lockfile-only
       - name: Install dependencies
         run: pnpm install
 
