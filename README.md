@@ -14,6 +14,10 @@ pnpm install
 pnpm build
 ```
 
+## Model Training
+
+The logistic‑regression baseline is trained automatically in the CI pipeline via `packages/scripts/train-model.py`.  It reads a CSV from `packages/data/dataset/augmented/train.csv` (a small synthetic dataset is generated if the file does not exist) and outputs the trained weights to `packages/scoring/model.json`.
+
 ## Documentation
 
 - [Threat Model](docs/threat_model.md)
