@@ -1,6 +1,14 @@
 // Background service worker
 console.log('Slop Filter background worker loaded');
 
+// Load settings from storage
+let settings = { slopThreshold: 0.5, allowlist: [], denylist: [] };
+chrome.storage.sync.get(['slopThreshold','allowlist','denylist'], data => {
+  settings.slopThreshold = data.slopThreshold !== undefined ? data.slopThreshold : 0.5;
+  settings.allowlist = data.allowlist ? data.allowlist.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  settings.denylist = data.denylist ? data.denylist.split(',').map(s=>s.trim()).filter(Boolean) : [];
+});
+
 // Request audio capture when extension is clicked
 async function captureAudioFromStream(stream, durationMs) {
   const audioCtx = new AudioContext();
@@ -92,6 +100,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // In a real implementation we'd record that user allowed this video
     console.log('User allowed to show slop');
     sendResponse({ status: 'allowed' });
+    return true;
+  }
+  if (message.type === 'checkPrefix') {
+    const url = message.url;
+    // Simple allow/deny logic
+    if (settings.denylist.some(u => url.includes(u))) {
+      sendResponse({ verdict: 'BLOCK' });
+      return true;
+    }
+    if (settings.allowlist.some(u => url.includes(u))) {
+      sendResponse({ verdict: 'ALLOW' });
+      return true;
+    }
+    // Fallback: query backend
+    fetch('https://example.com/v1/bucket/' + encodeURIComponent(url), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    })
+      .then(res => res.json())
+      .then(data => {
+        const verdict = data.verdict || 'ALLOW';
+        sendResponse({ verdict });
+      })
+      .catch(err => {
+        console.error('Error checking prefix:', err);
+        sendResponse({ verdict: 'ALLOW' });
+      });
     return true;
   }
   return false;

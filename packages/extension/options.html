@@ -13,18 +13,19 @@
 <body>
   <h1>Slop Filter Settings</h1>
   <label>Slop Threshold (0–1):
-    <input type="number" id="threshold" min="0" max="1" step="0.01" value="0.5" />
+    <input type="range" id="threshold" min="0" max="1" step="0.01" value="0.5" aria-label="Slop threshold" />
+    <span id="thresholdValue">0.50</span>
   </label>
   <label>Allowlist (comma‑separated URLs):
-    <textarea id="allowlist"></textarea>
+    <textarea id="allowlist" aria-label="Allowlist URLs"></textarea>
   </label>
   <label>Denylist (comma‑separated URLs):
-    <textarea id="denylist"></textarea>
+    <textarea id="denylist" aria-label="Denylist URLs"></textarea>
   </label>
-  <label><input type="checkbox" id="annotation" /> Enable Annotation Mode</label>
-  <button id="saveBtn">Save Settings</button>
-  <button id="deleteBtn">Delete All Stored Data</button>
-<button id="exportBtn">Export Annotations</button>
+  <label><input type="checkbox" id="annotation" aria-label="Enable Annotation Mode" /> Enable Annotation Mode</label>
+  <button id="saveBtn" aria-label="Save Settings">Save Settings</button>
+  <button id="deleteBtn" aria-label="Delete All Stored Data">Delete All Stored Data</button>
+<button id="exportBtn" aria-label="Export Annotations">Export Annotations</button>
   <script src="options.js"></script>
 </body>
 </html>

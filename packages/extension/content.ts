@@ -13,9 +13,13 @@ overlay.style.zIndex = '2147483647';
 overlay.style.fontFamily = 'Arial, sans-serif';
 overlay.style.fontSize = '12px';
 overlay.style.borderRadius = '4px';
-overlay.innerHTML = `<div id="slop-indicator">Slop detected</div>
-  <ul id="slop-explanations" style="margin:4px 0;padding-left:20px;"></ul>
-  <button id="slop-show-anyway" style="margin-top:4px;">Show anyway</button>`;
+overlay.setAttribute('role', 'dialog');
+overlay.setAttribute('aria-modal', 'true');
+overlay.setAttribute('aria-labelledby', 'slop-indicator');
+overlay.setAttribute('tabindex','-1');
+overlay.innerHTML = `<div id="slop-indicator" aria-live="polite">Slop detected</div>
+  <ul id="slop-explanations" style="margin:4px 0;padding-left:20px;" aria-label="Slop explanations"></ul>
+  <button id="slop-show-anyway" style="margin-top:4px;" aria-label="Show anyway">Show anyway</button>`;
 
 const explanations = ['Audio quality', 'Video bitrate', 'Caption accuracy'];
 const ul = overlay.querySelector('#slop-explanations');
@@ -25,6 +29,7 @@ explanations.forEach(text => {
   ul.appendChild(li);
 });
 document.body.appendChild(overlay);
+overlay.style.display = 'none';
 
 overlay.querySelector('#slop-show-anyway').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'allowShow' });
@@ -93,8 +98,18 @@ function showAnnotationModal() {
 }
 
 // Check annotation mode flag
-chrome.storage.sync.get(['annotation'], ({ annotation }) => {
+chrome.storage.sync.get(['annotation','annotationConsent'], ({ annotation, annotationConsent }) => {
   if (annotation) {
+    if (!annotationConsent) {
+      // Show consent modal
+      const consent = window.confirm('Do you consent to store annotations for this site?');
+      if (consent) {
+        chrome.storage.sync.set({ annotationConsent: true });
+      } else {
+        chrome.storage.sync.set({ annotation: false });
+        return;
+      }
+    }
     createAnnotationButton();
   }
 });
@@ -143,6 +158,20 @@ function startCapture() {
     });
     // Optional: also send raw audio if needed
     chrome.runtime.sendMessage({ type: 'audioCapture', audio: data, sampleRate: audioCtx.sampleRate });
+    // Check if this URL should be blocked
+    chrome.runtime.sendMessage({ type: 'checkPrefix', url: location.href }, (resp) => {
+      if (resp && resp.verdict === 'BLOCK') {
+        overlay.style.display = 'block';
+        overlay.focus();
+        const escHandler = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            overlay.style.display = 'none';
+            document.removeEventListener('keydown', escHandler);
+          }
+        };
+        document.addEventListener('keydown', escHandler);
+      }
+    });
   }, captureDurationSec * 1000);
 }
 

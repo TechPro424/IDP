@@ -34,14 +34,9 @@ const persistBloom = async () => {
 
 app.get('/v1/bucket/:prefix', async (c) => {
   const prefix = c.req.param('prefix');
-  if (bloom.test(prefix)) {
-    return c.json({ verdict: 'BLOCK' });
-  }
-  const kvVal = await kv.get(prefix);
-  if (kvVal === 'true') {
-    return c.json({ verdict: 'BLOCK' });
-  }
-  return c.json({ verdict: 'ALLOW' });
+  const verdict = bloom.test(prefix) || (await kv.get(prefix) === 'true') ? 'BLOCK' : 'ALLOW';
+  const padded = Array.from({ length: 32 }, (_, i) => ({ index: i, key: '', value: '' }));
+  return c.json({ verdict, padded });
 });
 
 app.post('/v1/bucket/:prefix', async (c) => {
@@ -49,16 +44,11 @@ app.post('/v1/bucket/:prefix', async (c) => {
   bloom.add(prefix);
   await kv.put(prefix, 'true');
   await persistBloom();
-  return c.json({ status: 'added' });
+  const padded = Array.from({ length: 32 }, (_, i) => ({ index: i, key: '', value: '' }));
+  return c.json({ status: 'added', padded });
 });
 
 app.get('/health', async () => ({ status: 'ok' }));
 
-  const prefix = c.req.param('prefix');
-  bloom.add(prefix);
-  await kv.put(prefix, 'true');
-  await persistBloom();
-  return c.json({ status: 'added' });
-});
 
 serve(app);

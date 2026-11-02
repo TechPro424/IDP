@@ -46,10 +46,31 @@ export function computeSRS(s: SubScores): number | undefined {
   return Math.min(s.S, H);
 }
 
-export function decide(s: SubScores, thresholds?: Thresholds, policy?: MissingModalityPolicy): ScoreResult {
+// Fusion ablation strategies.
+export function fuseAnd(s: SubScores): number | undefined { return computeSRS(s); }
+export function fuseMin(s: SubScores): number | undefined { return computeSRS(s); }
+export function fuseProduct(s: SubScores): number | undefined {
+  const H = computeH(s);
+  if (s.S == null || H == null) return undefined;
+  return s.S * H;
+}
+export function fuseNoisyAnd(s: SubScores): number | undefined {
+  const H = computeH(s);
+  if (s.S == null || H == null) return undefined;
+  return Math.max(0, Math.min(1, (s.S + H) / 2 - 0.1));
+}
+export function fuseLogistic(s: SubScores): number | undefined {
+  const H = computeH(s);
+  if (s.S == null || H == null) return undefined;
+  const z = 5 * (s.S - 0.5) + 5 * (H - 0.5);
+  return 1 / (1 + Math.exp(-z));
+}
+
+export function decide(s: SubScores, thresholds?: Thresholds, policy?: MissingModalityPolicy, fusion?: (s: SubScores)=>number | undefined): ScoreResult {
   const { tauS, tauH } = thresholds ?? DEFAULT_THRESHOLDS;
   const h = computeH(s);
-  const srs = computeSRS(s);
+  const fusionFunc = fusion ?? fuseAnd;
+  const srs = fusionFunc(s);
 
   // Missing‑modality policy.
   if (s.S == null) {

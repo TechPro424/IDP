@@ -1,0 +1,100 @@
+# GitHub Actions CI pipeline for Slop Filter
+# Triggers on pushes and pull requests to main and feature branches
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: TypeScript type‑check
+        run: pnpm tsc --noEmit
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Build extension
+        run: pnpm -C packages/extension build
+
+      - name: Run e2e tests with Playwright
+        run: pnpm -C packages/extension test:e2e
+        env:
+          # Provide a dummy endpoint for the edge worker during e2e
+          BASE_URL: http://localhost:8787
+
+      - name: Run dataset assembly script
+        run: bash packages/scripts/assemble-dataset.sh
+
+      - name: Run augmentation script
+        run: bash packages/scripts/augment-dataset.sh --clean
+
+      - name: Export model weights
+        run: bash packages/scripts/export-models.sh
+
+      - name: Compute thresholds
+        run: bash packages/scripts/compute-thresholds.sh
+
+      - name: Run evaluation placeholder
+        run: bash packages/scripts/evaluate.sh --json
+
+      - name: Upload evaluation report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: results/**
+
+      - name: Upload extension build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-build
+          path: packages/extension/dist/**
+
+  # Optional: test Edge worker locally via wrangler dev
+  edge-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Cloudflare Wrangler
+        uses: cloudflare/wrangler-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Run Edge worker tests
+        run: pnpm -C packages/edge test
+
+# End of workflow

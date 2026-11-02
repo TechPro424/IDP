@@ -1,0 +1,39 @@
+{
+  "rubric": [
+    {
+      "name": "Attention Fragmentation",
+      "description": "Frequency of rapid cuts or pacing that may signal synthetic narration.",
+      "anchors": {
+        "low": "Pacing is natural, few abrupt transitions.",
+        "medium": "Occasional quick cuts, but overall natural.",
+        "high": "Frequent rapid cuts, indicating automated editing."
+      }
+    },
+    {
+      "name": "Substance Deficit",
+      "description": "Presence of filler content or lack of substantive information.",
+      "anchors": {
+        "low": "Content is rich and informative.",
+        "medium": "Some filler or repetitive text.",
+        "high": "Content is largely filler or repetitive."
+      }
+    },
+    {
+      "name": "Narration Origin",
+      "description": "Whether the spoken voice appears human or synthetic.",
+      "anchors": {
+        "human": "Voice sounds natural, with human prosody.",
+        "synthetic": "Voice has robotic cadence or unnatural tones."
+      }
+    },
+    {
+      "name": "Epistemic Reliability",
+      "description": "Confidence that the content is accurate and trustworthy.",
+      "anchors": {
+        "high": "Content is well‑sourced and factually accurate.",
+        "medium": "Some questionable claims.",
+        "low": "Content is likely misinformation."
+      }
+    }
+  ]
+}

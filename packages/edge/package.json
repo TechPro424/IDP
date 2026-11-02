@@ -4,7 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "build": "echo 'build edge (placeholder)'",
-    "benchmark:edge": "node scripts/benchmark-edge.js"
+    "benchmark:edge": "node scripts/benchmark-edge.js",
+    "benchmark:edge-real": "node scripts/benchmark-edge-real.js"
   },
   "devDependencies": {}
 }

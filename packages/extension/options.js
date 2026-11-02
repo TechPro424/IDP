@@ -1,14 +1,21 @@
 // Options page script
 const thresholdInput = document.getElementById('threshold');
+const thresholdValueSpan = document.getElementById('thresholdValue');
 const allowlistInput = document.getElementById('allowlist');
 const denylistInput = document.getElementById('denylist');
 const annotationCheckbox = document.getElementById('annotation');
 const saveBtn = document.getElementById('saveBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 
+thresholdInput.addEventListener('input', () => {
+  thresholdValueSpan.textContent = parseFloat(thresholdInput.value).toFixed(2);
+});
+
 // Load current settings
 chrome.storage.sync.get(['slopThreshold','allowlist','denylist','annotation'], data => {
-  thresholdInput.value = data.slopThreshold !== undefined ? data.slopThreshold : 0.5;
+  const thresh = data.slopThreshold !== undefined ? data.slopThreshold : 0.5;
+  thresholdInput.value = thresh;
+  thresholdValueSpan.textContent = parseFloat(thresh).toFixed(2);
   allowlistInput.value = data.allowlist || '';
   denylistInput.value = data.denylist || '';
   annotationCheckbox.checked = !!data.annotation;
