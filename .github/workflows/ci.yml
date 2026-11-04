@@ -40,6 +40,8 @@ jobs:
 
       - name: TypeScript type‑check
         run: pnpm exec tsc --noEmit
+        
+      - run: pnpm exec playwright install chromium --with-deps
 
       - name: Run unit tests
         run: pnpm test
