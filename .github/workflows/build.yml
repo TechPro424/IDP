@@ -14,8 +14,8 @@ jobs:
       - run: pnpm install
       - run: pnpm test
       - run: pnpm test:e2e
-+      # Package Chrome and Firefox extensions
-+      - name: Build Chrome package
-+        run: pnpm run package:chrome
-+      - name: Build Firefox package
-+        run: pnpm run package:firefox
+      # Package Chrome and Firefox extensions
+      - name: Build Chrome package
+        run: pnpm run package:chrome
+      - name: Build Firefox package
+        run: pnpm run package:firefox
