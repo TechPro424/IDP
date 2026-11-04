@@ -1,5 +1,5 @@
 // Audio feature utilities using Meyda (optional) or custom FFT
-import { fft as FFT } from 'fft-js';
+// FFT functionality removed – not used in current implementation.
 
 export function computeRMS(buffer: Float32Array): number {
   let sum = 0;
