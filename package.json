@@ -10,6 +10,7 @@
     "build": "pnpm -F slop-filter-extension build && pnpm -F slop-filter-edge build",
     "lint": "tsc --noEmit",
     "test": "node --loader ts-node/esm packages/features/tests/test.ts && node --loader ts-node/esm packages/features/tests/text.test.ts && node --loader ts-node/esm packages/features/tests/visual.test.ts && node --loader ts-node/esm packages/features/tests/integration.test.ts && node --loader ts-node/esm packages/edge/tests/handler.test.ts && node --loader ts-node/esm packages/edge/tests/kv.test.ts",
+    "pretest:e2e": "pnpm -F slop-filter-extension build",
     "test:e2e": "playwright test",
     "package:chrome": "pnpm -C packages/extension run package:chrome",
     "package:firefox": "pnpm -C packages/extension run package:firefox"

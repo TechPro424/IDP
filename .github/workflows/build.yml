@@ -16,10 +16,10 @@ jobs:
           version: 9
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm test
-      - run: pnpm exec playwright install
-      - run: pnpm test:e2e
       - name: Build extension
         run: pnpm -C packages/extension build
+      - run: pnpm exec playwright install chromium --with-deps
+      - run: pnpm test:e2e
       # Package Chrome and Firefox extensions
       - name: Build Chrome package
         run: pnpm run package:chrome
