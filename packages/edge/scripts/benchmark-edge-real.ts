@@ -6,7 +6,7 @@ const N = 1000;
 const prefixes = Array.from({ length: N }, (_, i) => `prefix-${i}`);
 const baseUrl = process.env.BASE_URL || 'http://localhost:8787';
 
-async function benchGet() {
+async function benchGet(): Promise<void> {
   let total = 0;
   for (const p of prefixes) {
     const start = Date.now();
@@ -18,7 +18,7 @@ async function benchGet() {
   console.log(`GET: avg ${total / N} ms`);
 }
 
-async function benchPost() {
+async function benchPost(): Promise<void> {
   let total = 0;
   for (const p of prefixes) {
     const start = Date.now();

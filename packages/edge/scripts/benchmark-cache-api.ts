@@ -3,7 +3,7 @@
 const N = 100;
 const baseUrl = process.env.BASE_URL || 'https://example.com';
 
-async function benchCacheGet() {
+async function benchCacheGet(): Promise<void> {
   let total = 0;
   for (let i = 0; i < N; i++) {
     const start = Date.now();
@@ -13,7 +13,7 @@ async function benchCacheGet() {
   console.log(`Cache GET avg ${total / N} ms`);
 }
 
-async function benchCachePut() {
+async function benchCachePut(): Promise<void> {
   let total = 0;
   for (let i = 0; i < N; i++) {
     const start = Date.now();

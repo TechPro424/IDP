@@ -1,9 +1,9 @@
 // Simple test harness for extractFeatures
-import { extractFeatures, AudioInput } from '../src/index';
+import { extractFeatures, AudioInput } from '../src/index.js';
 
-// Generate a 1‑second 440Hz sine wave at 48kHz
+// Generate a 5‑second 440Hz sine wave at 48kHz
 const sampleRate = 48000;
-const durationSec = 1;
+const durationSec = 5;
 const freq = 440;
 const data = new Float32Array(sampleRate * durationSec);
 for (let i = 0; i < data.length; i++) {
@@ -23,7 +23,7 @@ if (avgPitch === undefined) throw new Error('No avgPitch');
 console.log('All metrics present.');
 
 // Silence test
-const silence: Float32Array = new Float32Array(sampleRate * durationSec);
+const silence: Float32Array = new Float32Array(sampleRate * 1);
 const silenceInput: AudioInput = { data: silence, sampleRate };
 const silenceResult = extractFeatures(silenceInput);
 if (!silenceResult.audio) throw new Error('Silence missing audio');
@@ -67,5 +67,5 @@ const noiseInput: AudioInput = { data: noise, sampleRate };
 const noiseResult = extractFeatures(noiseInput);
 if (!noiseResult.audio) throw new Error('Noise missing audio');
 const noisePitch = noiseResult.audio.avgPitch;
-if (noisePitch === undefined || isNaN(noisePitch)) throw new Error('Noise pitch should be NaN or undefined');
+if (noisePitch !== undefined && !isNaN(noisePitch)) throw new Error('Noise pitch should be NaN or undefined');
 console.log('Noise test passed.');

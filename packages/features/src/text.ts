@@ -1,4 +1,5 @@
 // Text feature extraction utilities
+import zlib from 'node:zlib';
 
 export interface TextFeatures {
   tokenEntropy?: number;
@@ -51,8 +52,6 @@ export function extractTextFeatures(text: string): TextFeatures {
   // Gzip ratio
   let gzipRatio = 0;
   try {
-    // Node's zlib is available in the test environment
-    import zlib from 'zlib';
     const buffer = Buffer.from(text, 'utf8');
     const compressed = zlib.deflateSync(buffer);
     gzipRatio = compressed.length / buffer.length;

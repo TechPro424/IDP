@@ -1,4 +1,4 @@
-import { extractFeatures, AudioInput, VisualAnalyzer, extractTextFeatures } from '../src/index';
+import { extractFeatures, AudioInput } from '../src/index.js';
 
 // Create dummy audio data
 const sampleRate = 48000;

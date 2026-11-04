@@ -1,9 +1,9 @@
 // Shared feature extraction utilities (audio, visual, text)
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // ----- Configuration -----
-const CONFIG_PATH = join(__dirname, 'config.json');
+const CONFIG_PATH = fileURLToPath(new URL('./config.json', import.meta.url));
 export const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8')) as Config;
 export interface Config {
   audio: {
@@ -28,9 +28,12 @@ export interface AudioFeatures {
   avgCentroid?: number;
   avgPitch?: number;
 }
-import { VisualAnalyzer, VisualFeatures } from './visual';
-import { TextFeatures as TF } from './text';
+import { VisualAnalyzer, type VisualFeatures } from './visual.js';
+import { type TextFeatures as TF, extractTextFeatures } from './text.js';
 export type TextFeatures = TF;
+export { VisualAnalyzer };
+export type { VisualFeatures };
+export { extractTextFeatures };
 
 // ----- Input Type -----
 export interface AudioInput {
@@ -39,46 +42,44 @@ export interface AudioInput {
 }
 
 // ----- Feature Extraction -----
-import Meyda, { MeydaAnalyzer } from 'meyda';
-import { computeRMS } from './audio';
-import { extractTextFeatures } from './text';
+// @ts-ignore
+import Meyda from 'meyda';
+import { computeRMS, computePitch } from './audio.js';
 
 export function extractFeatures(input: AudioInput, imageData?: any, text?: string): FeatureResult {
   const { data, sampleRate } = input;
   const durationSec = data.length / sampleRate;
   const { minSpeechSeconds } = config.audio;
 
-  // Meyda analyzer for spectral features
+  // Meyda for spectral features
   const frameSize = 1024;
   const hopSize = 512; // 50% overlap
-  const analyzer = Meyda.createMeydaAnalyzer({
-    bufferSize: frameSize,
-    hopSize,
-    sampleRate,
-    featureExtractors: [
-      'spectralFlatness',
-      'spectralCentroid',
-      'pitch',
-    ],
-  });
+  const meydaObj = (Meyda as any).default || Meyda;
+  meydaObj.bufferSize = frameSize;
+  meydaObj.hopSize = hopSize;
+  meydaObj.sampleRate = sampleRate;
 
   let voicedFrames = 0;
   let totalFrames = 0;
   let flatnessSum = 0;
   let centroidSum = 0;
   let pitchSum = 0;
+  let pitchFrames = 0;
 
   for (let i = 0; i + frameSize <= data.length; i += hopSize) {
     const frame = data.slice(i, i + frameSize);
     const rms = computeRMS(frame);
     if (rms > 0.05) voicedFrames++;
 
-    analyzer.setBuffer(frame);
-    const features: any = analyzer.get();
-    flatnessSum += features.spectralFlatness ?? 0;
-    centroidSum += features.spectralCentroid ?? 0;
+    const features: any = meydaObj.extract ? meydaObj.extract(['spectralFlatness', 'spectralCentroid'], frame) : {};
+    flatnessSum += features?.spectralFlatness ?? 0;
+    centroidSum += features?.spectralCentroid ?? 0;
 
-    pitchSum += features.pitch ?? 0;
+    const pitch = computePitch(frame, sampleRate);
+    if (!isNaN(pitch)) {
+      pitchSum += pitch;
+      pitchFrames++;
+    }
     totalFrames++;
   }
 
@@ -88,7 +89,7 @@ export function extractFeatures(input: AudioInput, imageData?: any, text?: strin
 
   const avgFlatness = totalFrames > 0 ? flatnessSum / totalFrames : 0;
   const avgCentroid = totalFrames > 0 ? centroidSum / totalFrames : 0;
-  const avgPitch = totalFrames > 0 ? pitchSum / totalFrames : 0;
+  const avgPitch = pitchFrames > 0 ? pitchSum / pitchFrames : NaN;
 
   // Visual analysis
   let visual: VisualFeatures | undefined;

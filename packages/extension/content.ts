@@ -1,4 +1,6 @@
-import { extractFeatures, AudioInput } from '../features/src/index';
+import { extractFeatures, AudioInput } from '../features/src/index.js';
+
+declare const chrome: any;
 
 // Overlay injection for Slop Filter
 const overlay = document.createElement('div');
@@ -16,22 +18,24 @@ overlay.style.borderRadius = '4px';
 overlay.setAttribute('role', 'dialog');
 overlay.setAttribute('aria-modal', 'true');
 overlay.setAttribute('aria-labelledby', 'slop-indicator');
-overlay.setAttribute('tabindex','-1');
+overlay.setAttribute('tabindex', '-1');
 overlay.innerHTML = `<div id="slop-indicator" aria-live="polite">Slop detected</div>
   <ul id="slop-explanations" style="margin:4px 0;padding-left:20px;" aria-label="Slop explanations"></ul>
   <button id="slop-show-anyway" style="margin-top:4px;" aria-label="Show anyway">Show anyway</button>`;
 
 const explanations = ['Audio quality', 'Video bitrate', 'Caption accuracy'];
 const ul = overlay.querySelector('#slop-explanations');
-explanations.forEach(text => {
-  const li = document.createElement('li');
-  li.textContent = text;
-  ul.appendChild(li);
-});
+if (ul) {
+  explanations.forEach(text => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    ul.appendChild(li);
+  });
+}
 document.body.appendChild(overlay);
 overlay.style.display = 'none';
 
-overlay.querySelector('#slop-show-anyway').addEventListener('click', () => {
+overlay.querySelector('#slop-show-anyway')?.addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'allowShow' });
   overlay.style.display = 'none';
 });
@@ -98,7 +102,7 @@ function showAnnotationModal() {
 }
 
 // Check annotation mode flag
-chrome.storage.sync.get(['annotation','annotationConsent'], ({ annotation, annotationConsent }) => {
+chrome.storage.sync.get(['annotation', 'annotationConsent'], ({ annotation, annotationConsent }: any) => {
   if (annotation) {
     if (!annotationConsent) {
       // Show consent modal
@@ -153,13 +157,13 @@ function startCapture() {
     const result = extractFeatures(input);
     console.log('Extracted features from captured audio:', result);
     // Send extracted features to background
-    chrome.runtime.sendMessage({ type: 'extractFeatures', features: result }, (response) => {
+    chrome.runtime.sendMessage({ type: 'extractFeatures', features: result }, (response: any) => {
       console.log('Background responded to feature extraction:', response);
     });
     // Optional: also send raw audio if needed
     chrome.runtime.sendMessage({ type: 'audioCapture', audio: data, sampleRate: audioCtx.sampleRate });
     // Check if this URL should be blocked
-    chrome.runtime.sendMessage({ type: 'checkPrefix', url: location.href }, (resp) => {
+    chrome.runtime.sendMessage({ type: 'checkPrefix', url: location.href }, (resp: any) => {
       if (resp && resp.verdict === 'BLOCK') {
         overlay.style.display = 'block';
         overlay.focus();
@@ -181,4 +185,3 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
   document.addEventListener('DOMContentLoaded', startCapture);
 }
-

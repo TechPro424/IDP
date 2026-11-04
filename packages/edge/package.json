@@ -5,8 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "build": "echo 'build edge (placeholder)'",
-    "benchmark:edge": "node scripts/benchmark-edge.js",
-    "benchmark:edge-real": "node scripts/benchmark-edge-real.js"
+    "benchmark:edge": "node --loader ts-node/esm scripts/benchmark-edge.ts",
+    "benchmark:edge-real": "node --loader ts-node/esm scripts/benchmark-edge-real.ts"
   },
   "devDependencies": {}
 }

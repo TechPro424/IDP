@@ -32,21 +32,25 @@ export function computeSpectralCentroid(freqs: number[], mags: number[]): number
 }
 
 export function computePitch(buffer: Float32Array, sampleRate: number): number {
-  // Simple autocorrelation pitch detection
+  // Autocorrelation pitch detection
   const SIZE = buffer.length;
   const maxLag = Math.floor(sampleRate / 50); // 50Hz min pitch
-  const minLag = Math.floor(sampleRate / 400); // 400Hz max pitch
-  let bestLag = minLag;
-  let bestCorr = -1;
-  for (let lag = minLag; lag <= maxLag; lag++) {
-    let corr = 0;
+  const minLag = Math.max(2, Math.floor(sampleRate / 5000)); // 5000Hz max pitch
+
+  const r = new Float32Array(maxLag + 1);
+  for (let lag = 0; lag <= maxLag; lag++) {
+    let sum = 0;
     for (let i = 0; i < SIZE - lag; i++) {
-      corr += buffer[i] * buffer[i + lag];
+      sum += buffer[i] * buffer[i + lag];
     }
-    if (corr > bestCorr) {
-      bestCorr = corr;
-      bestLag = lag;
+    r[lag] = sum;
+  }
+  if (r[0] === 0) return NaN;
+
+  for (let lag = minLag; lag < maxLag; lag++) {
+    if (r[lag] > r[lag - 1] && r[lag] > r[lag + 1] && r[lag] > 0.3 * r[0]) {
+      return sampleRate / lag;
     }
   }
-  return sampleRate / bestLag;
+  return NaN;
 }

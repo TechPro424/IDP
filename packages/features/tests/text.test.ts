@@ -1,4 +1,4 @@
-import { extractTextFeatures } from '../src/text';
+import { extractTextFeatures } from '../src/text.js';
 
 // Simple test
 const text = 'Hello world! Hello again. Test test test.';

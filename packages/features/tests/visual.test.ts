@@ -1,4 +1,4 @@
-import { VisualAnalyzer } from '../src/visual';
+import { VisualAnalyzer } from '../src/visual.js';
 
 // Helper to create solid color ImageData
 function solidColor(width: number, height: number, r: number, g: number, b: number, a: number = 255): any {

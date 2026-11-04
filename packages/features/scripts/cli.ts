@@ -1,6 +1,5 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { extractFeatures, AudioInput } from '../src/index';
+import { readFileSync } from 'node:fs';
+import { extractFeatures, AudioInput } from '../src/index.js';
 
 // Simple CLI: node cli.ts <path-to-wav>
 const args = process.argv.slice(2);

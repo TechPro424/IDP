@@ -1,5 +1,5 @@
 // Cloudflare Worker entry point
-addEventListener('fetch', event => {
+addEventListener('fetch', (event: any) => {
   event.respondWith(handleRequest(event.request));
 });
 
@@ -9,3 +9,5 @@ async function handleRequest(request: Request): Promise<Response> {
     headers: { 'content-type': 'text/plain' },
   });
 }
+
+export { handleRequest };

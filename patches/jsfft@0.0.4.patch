@@ -1,0 +1,46 @@
+diff --git a/dist/complex_array.js b/dist/complex_array.js
+index 9d3a84bd2d4de6d6f47306f209b9415216b9e1b7..a118e14511dd1a03285484016d4187cc25cb5b52 100644
+--- a/dist/complex_array.js
++++ b/dist/complex_array.js
+@@ -95,3 +95,5 @@ var ComplexArray = function () {
+ }();
+ 
+ exports.default = ComplexArray;
++exports.ComplexArray = ComplexArray;
++require("./fft");
+\ No newline at end of file
+diff --git a/lib/complex_array.js b/lib/complex_array.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..5215f28410d76cc7bc5c5da3a546bccb234a2862
+--- /dev/null
++++ b/lib/complex_array.js
+@@ -0,0 +1 @@
++module.exports = require("../dist/fft");
+diff --git a/lib/fft.js b/lib/fft.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..5215f28410d76cc7bc5c5da3a546bccb234a2862
+--- /dev/null
++++ b/lib/fft.js
+@@ -0,0 +1 @@
++module.exports = require("../dist/fft");
+diff --git a/lib/fft_image.js b/lib/fft_image.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..4324285f9faa4690d675c5ccc49fc88854642712
+--- /dev/null
++++ b/lib/fft_image.js
+@@ -0,0 +1 @@
++module.exports = require("../dist/fft_image");
+diff --git a/package.json b/package.json
+index 8db14f3077aec1dde9de426c8ed91b42162d776d..992ab248b7d85cc54be02a2988cb4746e82c6ca7 100644
+--- a/package.json
++++ b/package.json
+@@ -36,7 +36,8 @@
+     "test": "test"
+   },
+   "files": [
+-    "dist"
++    "dist",
++    "lib"
+   ],
+   "dependencies": {}
+ }

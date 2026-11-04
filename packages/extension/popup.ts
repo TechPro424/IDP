@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const enableChk = document.getElementById('enable');
-  const prefixInput = document.getElementById('prefix');
+  const enableChk = document.getElementById('enable') as HTMLInputElement | null;
+  const prefixInput = document.getElementById('prefix') as HTMLInputElement | null;
   const addBtn = document.getElementById('addBtn');
 
-  addBtn.addEventListener('click', () => {
-    const prefix = prefixInput.value.trim();
+  addBtn?.addEventListener('click', () => {
+    const prefix = prefixInput?.value.trim();
     if (!prefix) {
       alert('Enter a prefix');
       return;
@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Enable filter toggle
-  enableChk.addEventListener('change', () => {
+  enableChk?.addEventListener('change', () => {
     chrome.runtime.sendMessage({ type: 'enableFilter', enabled: enableChk.checked });
   });
 
   // New Bloom POST button
   const bloomBtn = document.getElementById('bloomBtn');
-  bloomBtn.addEventListener('click', () => {
-    const prefix = prefixInput.value.trim();
+  bloomBtn?.addEventListener('click', () => {
+    const prefix = prefixInput?.value.trim();
     if (!prefix) {
       alert('Enter a prefix for Bloom POST');
       return;

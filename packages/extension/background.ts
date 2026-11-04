@@ -1,22 +1,28 @@
 // Background service worker
 console.log('Slop Filter background worker loaded');
 
+interface Settings {
+  slopThreshold: number;
+  allowlist: string[];
+  denylist: string[];
+}
+
 // Load settings from storage
-let settings = { slopThreshold: 0.5, allowlist: [], denylist: [] };
-chrome.storage.sync.get(['slopThreshold','allowlist','denylist'], data => {
-  settings.slopThreshold = data.slopThreshold !== undefined ? data.slopThreshold : 0.5;
-  settings.allowlist = data.allowlist ? data.allowlist.split(',').map(s=>s.trim()).filter(Boolean) : [];
-  settings.denylist = data.denylist ? data.denylist.split(',').map(s=>s.trim()).filter(Boolean) : [];
+const settings: Settings = { slopThreshold: 0.5, allowlist: [], denylist: [] };
+chrome.storage.sync.get(['slopThreshold', 'allowlist', 'denylist'], (data) => {
+  settings.slopThreshold = typeof data.slopThreshold === 'number' ? data.slopThreshold : 0.5;
+  settings.allowlist = typeof data.allowlist === 'string' ? data.allowlist.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+  settings.denylist = typeof data.denylist === 'string' ? data.denylist.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
 });
 
 // Request audio capture when extension is clicked
-async function captureAudioFromStream(stream, durationMs) {
+async function captureAudioFromStream(stream: MediaStream, durationMs: number): Promise<void> {
   const audioCtx = new AudioContext();
   const source = audioCtx.createMediaStreamSource(stream);
   const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-  const buffer = [];
+  const buffer: number[] = [];
   let samplesCollected = 0;
-  const targetSamples = audioCtx.sampleRate * durationMs / 1000;
+  const targetSamples = (audioCtx.sampleRate * durationMs) / 1000;
   processor.onaudioprocess = (event) => {
     const input = event.inputBuffer.getChannelData(0);
     buffer.push(...input);
@@ -39,7 +45,7 @@ async function captureAudioFromStream(stream, durationMs) {
 
 chrome.action.onClicked.addListener(async () => {
   try {
-    const stream = await chrome.tabCapture.capture({ audio: true, video: false });
+    const stream = await (chrome.tabCapture as any).capture({ audio: true, video: false });
     console.log('Captured audio stream:', stream);
     // Capture 2 seconds of audio and send to runtime
     await captureAudioFromStream(stream, 2000);
@@ -47,14 +53,12 @@ chrome.action.onClicked.addListener(async () => {
     console.error('Audio capture failed:', e);
   }
 });
-// Removed duplicate onClicked listener
 
 // Handle messages from popup or content scripts
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'addPrefix') {
-    // Existing addPrefix handling
     fetch('https://example.com/v1/bucket/' + encodeURIComponent(message.prefix), {
-      method: 'POST'
+      method: 'POST',
     })
       .then((res) => res.json())
       .then((data) => {
@@ -71,7 +75,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     fetch('https://example.com/v1/bucket/' + encodeURIComponent(message.prefix), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefix: message.prefix })
+      body: JSON.stringify({ prefix: message.prefix }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -97,34 +101,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.type === 'allowShow') {
-    // In a real implementation we'd record that user allowed this video
     console.log('User allowed to show slop');
     sendResponse({ status: 'allowed' });
     return true;
   }
   if (message.type === 'checkPrefix') {
     const url = message.url;
-    // Simple allow/deny logic
-    if (settings.denylist.some(u => url.includes(u))) {
+    if (settings.denylist.some((u: string) => url.includes(u))) {
       sendResponse({ verdict: 'BLOCK' });
       return true;
     }
-    if (settings.allowlist.some(u => url.includes(u))) {
+    if (settings.allowlist.some((u: string) => url.includes(u))) {
       sendResponse({ verdict: 'ALLOW' });
       return true;
     }
-    // Fallback: query backend
     fetch('https://example.com/v1/bucket/' + encodeURIComponent(url), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url }),
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const verdict = data.verdict || 'ALLOW';
         sendResponse({ verdict });
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Error checking prefix:', err);
         sendResponse({ verdict: 'ALLOW' });
       });
@@ -132,4 +133,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return false;
 });
-

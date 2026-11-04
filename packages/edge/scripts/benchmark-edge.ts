@@ -3,10 +3,10 @@
 // Here we simulate with a simple Map and log approximate values.
 
 const N = 10000;
-const prefixes = Array.from({length:N},(_,i)=>`prefix-${i}`);
+const prefixes = Array.from({ length: N }, (_, i) => `prefix-${i}`);
 
-async function benchMap() {
-  const store = new Map();
+async function benchMap(): Promise<void> {
+  const store = new Map<string, string>();
   const startPut = Date.now();
   for (const p of prefixes) store.set(p, 'true');
   const endPut = Date.now();

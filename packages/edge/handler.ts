@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { serve } from 'std/server';
-import { BloomFilter } from './bloomFilter';
+import { BloomFilter } from './bloomFilter.js';
 
 const app = new Hono();
 
@@ -48,7 +47,7 @@ app.post('/v1/bucket/:prefix', async (c) => {
   return c.json({ status: 'added', padded });
 });
 
-app.get('/health', async () => ({ status: 'ok' }));
+app.get('/health', (c) => c.json({ status: 'ok' }));
 
-
-serve(app);
+export { app };
+export default app;
