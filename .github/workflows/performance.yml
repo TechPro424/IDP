@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '26.x'
+          node-version: '22.x'
       - name: Install dependencies
         env:
           npm_config_legacy_peer_deps: "true"
@@ -27,10 +27,10 @@ jobs:
       - name: Build extensions and edge worker
         run: pnpm run build
       - name: Run feature benchmark
-        run: node packages/features/scripts/benchmark.ts > feature-output.txt
+        run: node --loader ts-node/esm packages/features/scripts/benchmark.ts > feature-output.txt
         id: feature
       - name: Run edge benchmark
-        run: node packages/edge/scripts/benchmark.js > edge-output.txt
+        run: node --loader ts-node/esm packages/edge/scripts/benchmark.ts > edge-output.txt
         id: edge
       - name: Collect report
         run: |

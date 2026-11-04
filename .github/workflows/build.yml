@@ -10,13 +10,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 26.x
+          node-version: 22.x
       - uses: pnpm/action-setup@v2
         with:
           version: 9
-      - run: pnpm install
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm test
       - run: pnpm test:e2e
+      - name: Build extension
+        run: pnpm -C packages/extension build
       # Package Chrome and Firefox extensions
       - name: Build Chrome package
         run: pnpm run package:chrome

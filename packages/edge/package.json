@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "echo 'build edge (placeholder)'",
+    "test": "node --loader ts-node/esm tests/handler.test.ts && node --loader ts-node/esm tests/kv.test.ts",
     "benchmark:edge": "node --loader ts-node/esm scripts/benchmark-edge.ts",
     "benchmark:edge-real": "node --loader ts-node/esm scripts/benchmark-edge-real.ts"
   },
