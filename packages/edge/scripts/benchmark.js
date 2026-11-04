@@ -1,4 +1,4 @@
-const { BloomFilter } = require('./bloomFilter');
+import { BloomFilter } from './bloomFilter.js';
 
 // Simple KV stub
 class InMemoryKV {

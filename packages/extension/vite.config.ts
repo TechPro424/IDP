@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import fs from 'fs';
+import path from 'path';
 
 export default defineConfig({
   build: {
@@ -20,8 +22,7 @@ export default defineConfig({
     {
       name: 'copy-manifest',
       closeBundle() {
-        const fs = require('fs');
-        const path = require('path');
+        // use imported fs and path
         const src = path.resolve(__dirname, 'manifest.json');
         const dest = path.resolve(__dirname, 'dist', 'manifest.json');
         fs.copyFileSync(src, dest);

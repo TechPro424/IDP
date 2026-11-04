@@ -52,7 +52,7 @@ export function extractTextFeatures(text: string): TextFeatures {
   let gzipRatio = 0;
   try {
     // Node's zlib is available in the test environment
-    const zlib = require('zlib');
+    import zlib from 'zlib';
     const buffer = Buffer.from(text, 'utf8');
     const compressed = zlib.deflateSync(buffer);
     gzipRatio = compressed.length / buffer.length;
