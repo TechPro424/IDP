@@ -10,8 +10,20 @@ OUTPUT_DIR="packages/data/dataset/augmented"
 
 # Optional clean flag
 CLEAN=false
-while getopts ":c" opt; do
-  case $opt in c) CLEAN=true ;; *) die "Usage: $0 [-c]" ;; esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -c|--clean)
+      CLEAN=true
+      shift
+      ;;
+    -h|--help)
+      log "Usage: $0 [-c|--clean]"
+      exit 0
+      ;;
+    *)
+      die "Usage: $0 [-c|--clean]"
+      ;;
+  esac
 done
 
 if [[ "$CLEAN" == true ]]; then
