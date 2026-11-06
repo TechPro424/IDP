@@ -59,7 +59,7 @@ jobs:
         run: bash packages/scripts/assemble-dataset.sh
 
       - name: Run augmentation script
-        run: bash packages/scripts/augment-dataset.sh --clean
+        run: bash packages/scripts/augment-dataset.sh -c
 
       - name: Install Python dependencies for training
         run: pip install -r requirements.txt
