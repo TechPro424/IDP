@@ -108,6 +108,9 @@ jobs:
         with:
           version: 9
 
+      - name: Configure pnpm workspace root check
+        run: pnpm config set ignore-workspace-root-check true
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
