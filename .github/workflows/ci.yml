@@ -40,6 +40,8 @@ jobs:
 
       - name: TypeScript type‑check
         run: pnpm exec tsc --noEmit
+        
+      - run: pnpm exec playwright install chromium --with-deps
 
       - name: Run unit tests
         run: pnpm test
@@ -57,7 +59,7 @@ jobs:
         run: bash packages/scripts/assemble-dataset.sh
 
       - name: Run augmentation script
-        run: bash packages/scripts/augment-dataset.sh --clean
+        run: bash packages/scripts/augment-dataset.sh -c
 
       - name: Install Python dependencies for training
         run: pip install -r requirements.txt
@@ -72,7 +74,7 @@ jobs:
         run: bash packages/scripts/compute-thresholds.sh
 
       - name: Run evaluation placeholder
-        run: bash packages/scripts/evaluate.sh --json
+        run: bash packages/scripts/evaluate.sh -j
 
       - name: Upload evaluation report
         if: success()
