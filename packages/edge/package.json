@@ -9,5 +9,7 @@
     "benchmark:edge": "node --loader ts-node/esm scripts/benchmark-edge.ts",
     "benchmark:edge-real": "node --loader ts-node/esm scripts/benchmark-edge-real.ts"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
 }
