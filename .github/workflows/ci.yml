@@ -118,6 +118,8 @@ jobs:
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: packages/edge
+          command: --version
 
       - name: Run Edge worker tests
         run: pnpm -C packages/edge test
