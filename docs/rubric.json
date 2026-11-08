@@ -1,39 +1,64 @@
 {
-  "rubric": [
+  "version": "0-draft",
+  "status": "not validated with annotators; no kappa exists",
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "note": "1-5 ordinal. Anchors are deliberately terse; see docs/rubric/annotation-rubric.md for the long form and the known problems."
+  },
+  "dimensions": [
     {
+      "id": "attention_fragmentation",
       "name": "Attention Fragmentation",
-      "description": "Frequency of rapid cuts or pacing that may signal synthetic narration.",
+      "mapsTo": "Hatt",
+      "description": "How fast the video cuts, and whether any shot is allowed to breathe.",
       "anchors": {
-        "low": "Pacing is natural, few abrupt transitions.",
-        "medium": "Occasional quick cuts, but overall natural.",
-        "high": "Frequent rapid cuts, indicating automated editing."
+        "1": "Long, stable shots; a sustained argument.",
+        "3": "Mixed; some b-roll and cuts.",
+        "5": "Cut every 1-2 s, zoom-punches, no dwell."
       }
     },
     {
+      "id": "substance_deficit",
       "name": "Substance Deficit",
-      "description": "Presence of filler content or lack of substantive information.",
+      "mapsTo": "Hsub",
+      "description": "Whether the video adds information beyond restating its title.",
       "anchors": {
-        "low": "Content is rich and informative.",
-        "medium": "Some filler or repetitive text.",
-        "high": "Content is largely filler or repetitive."
+        "1": "Specific claims, named sources, numbers.",
+        "3": "Generic but on-topic.",
+        "5": "Restates the title, no new information, circular."
       }
     },
     {
+      "id": "narration_origin",
       "name": "Narration Origin",
-      "description": "Whether the spoken voice appears human or synthetic.",
+      "mapsTo": "S",
+      "description": "Human or machine voice. The dimension most likely to fail as TTS improves.",
       "anchors": {
-        "human": "Voice sounds natural, with human prosody.",
-        "synthetic": "Voice has robotic cadence or unnatural tones."
+        "1": "Clearly human: disfluencies, breaths, variable pause length.",
+        "3": "Ambiguous: heavy processing, or an unusually polished human.",
+        "5": "Clearly synthetic: flat prosody, no breaths, uniform pauses."
       }
     },
     {
+      "id": "epistemic_reliability",
       "name": "Epistemic Reliability",
-      "description": "Confidence that the content is accurate and trustworthy.",
+      "description": "Checkability and honesty of the claims. Requires domain knowledge; expect low agreement.",
       "anchors": {
-        "high": "Content is well‑sourced and factually accurate.",
-        "medium": "Some questionable claims.",
-        "low": "Content is likely misinformation."
+        "1": "Claims are checkable and sourced.",
+        "3": "Unverifiable but not misleading.",
+        "5": "Confident false or unfalsifiable claims."
       }
     }
-  ]
+  ],
+  "derivedLabels": {
+    "harm_proxy_label": "1 iff narration_origin >= 4 AND substance_deficit >= 4",
+    "slop_label": "1 iff attention_fragmentation >= 4 AND harm_proxy_label = 1",
+    "normalisation": "S = (narration_origin-1)/4, Hatt = (attention_fragmentation-1)/4, Hsub = (substance_deficit-1)/4"
+  },
+  "adjudication": {
+    "trigger": "delta >= 2 on any dimension, or opposite harm_proxy_label",
+    "procedure": "docs/rubric/adjudication.md",
+    "stopConditions": ["kappa(narration_origin) < 0.6", "adjudication rate > 30%"]
+  }
 }

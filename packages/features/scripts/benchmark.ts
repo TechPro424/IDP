@@ -17,6 +17,6 @@ for (let i = 0; i < samples.length; i++) {
 }
 const input: AudioInput = { data: float32, sampleRate: 16000 };
 console.time('extractFeatures');
-const result = extractFeatures(input);
+const result = await extractFeatures(input);
 console.timeEnd('extractFeatures');
 console.log('Result', JSON.stringify(result, null, 2));

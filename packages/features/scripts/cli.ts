@@ -1,20 +1,18 @@
+// Node-only: extract the feature vector for one video's audio (+ optional captions).
+// Usage: node --loader ts-node/esm packages/features/scripts/cli.ts <wav> [captions.txt]
 import { readFileSync } from 'node:fs';
-import { extractFeatures, AudioInput } from '../src/index.js';
+import { extractFeatures } from '../src/index.js';
+import { config } from '../src/config.js';
+import { readWav } from './wav.js';
 
-// Simple CLI: node cli.ts <path-to-wav>
-const args = process.argv.slice(2);
-if (args.length !== 1) {
-  console.error('Usage: ts-node packages/features/scripts/cli.ts <wav-file>');
+const [wavPath, captionPath] = process.argv.slice(2);
+if (!wavPath) {
+  console.error('Usage: cli.ts <wav-file> [captions.txt]');
   process.exit(1);
 }
-const wavPath = args[0];
-const buffer = readFileSync(wavPath);
-// Assume 16-bit PCM WAV, mono. Convert to Float32Array.
-const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
-const float32 = new Float32Array(samples.length);
-for (let i = 0; i < samples.length; i++) {
-  float32[i] = samples[i] / 32768;
-}
-const input: AudioInput = { data: float32, sampleRate: 16000 };
-const result = extractFeatures(input);
-console.log(JSON.stringify(result, null, 2));
+
+const wav = readWav(wavPath);
+const captions = captionPath ? readFileSync(captionPath, 'utf8') : undefined;
+// Lab audio is resampled to the shared lab rate so Node and the browser agree.
+const features = await extractFeatures({ ...wav, targetSampleRate: config.audio.labSampleRate }, undefined, captions);
+console.log(JSON.stringify(features, null, 2));

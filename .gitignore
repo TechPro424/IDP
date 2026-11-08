@@ -148,3 +148,10 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 /.agentbridge/
+
+# Build artefacts
+dist-firefox/
+dist_*.zip
+.playwright/
+packages/features/.parity/
+test-results/

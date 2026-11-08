@@ -1,24 +1,17 @@
 #!/usr/bin/env bash
-# Compute final thresholds from validation data.
+# Compute tau_s / tau_h from validation data only (never from the test set).
 set -euo pipefail
 
-log() { printf '%s\n' "$*"; }
-die() { log "$*" >&2; exit 1; }
+VAL=${VAL:-packages/data/processed/val.csv}
+OUT=${OUT:-packages/scoring/thresholds.json}
+FLOOR=${PRECISION_FLOOR:-0.85}
 
-# Load defaults or override via env
-TASS=${TASS:-0.65}
-TAH=${TAH:-0.60}
+if [[ ! -f "$VAL" ]]; then
+  echo "error: $VAL not found — thresholds must come from validation data (plan §9.3)." >&2
+  exit 1
+fi
 
-# Basic sanity check using bc
-if ! command -v bc &>/dev/null; then die "bc required for numeric checks"; fi
-if (( $(echo "$TASS < 0 || $TASS > 1" | bc -l) )); then die "tauS out of bounds (0-1)"; fi
-if (( $(echo "$TAH < 0 || $TAH > 1" | bc -l) )); then die "tauH out of bounds (0-1)"; fi
+python3 packages/scripts/compute-thresholds.py --val "$VAL" --out "$OUT" --precision-floor "$FLOOR"
 
-# Ensure jq is available
-if ! command -v jq &>/dev/null; then die "jq required to build JSON"; fi
-
-jq -n --arg tS "$TASS" --arg tH "$TAH" \
-  '{tauS: ($tS|tonumber), tauH: ($tH|tonumber)}' \
-  > packages/scoring/thresholds.json
-
-log "Thresholds written to packages/scoring/thresholds.json"
+echo "Thresholds written to $OUT"
+echo "Now copy tauS/tauH into packages/extension/settings.ts defaults and record the commit."

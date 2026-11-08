@@ -1,45 +1,21 @@
-# ADR 004: Spike A – Audio Capture on YouTube
+# ADR 004: Spike A — Audio Capture
 
 ## Context
-The extension must capture live audio from a YouTube video in order to compute synthetic‑narration likelihood. The initial spike explored three capture methods:
-
-1. `createMediaElementSource` from the `<video>` element.
-2. `AudioWorklet` with a custom processor.
-3. `captureStream()` from the media element.
-
-The goal was to find a method that:
-
-- Works in a Manifest V3 extension.
-- Does **not** return silent data.
-- Does not interfere with playback.
+The extension must capture the audio of the playing video to estimate synthetic narration. Candidates: `createMediaElementSource`, `AudioWorklet`, `captureStream()`.
 
 ## Investigation
-1. **`createMediaElementSource`**
-   - Tested on a local page embedding a YouTube iframe and on the actual YouTube watch page.
-   - On the watch page, the audio graph produced audible samples; no `silence` was observed.
-   - The method is supported in all Chromium‑based browsers and is the simplest to use.
-
-2. **`AudioWorklet`**
-   - A custom worklet was injected via `audioCtx.audioWorklet.addModule()`.
-   - The worklet ran but the output buffer was always zeros on YouTube. This is consistent with Chromium’s CSP restrictions that block `blob:` modules when loaded from an extension in a cross‑origin iframe.
-   - No viable workaround was found without modifying the extension’s CSP, which is not allowed.
-
-3. **`captureStream()`**
-   - The method is blocked for DRM‑encrypted media (YouTube uses Encrypted Media Extensions for many videos).
-   - Even for non‑DRM content, the returned `MediaStream` was silent due to the same origin restrictions.
+- **`createMediaElementSource`** — works on the watch page; the media element is fed by MSE `blob:` URLs, so the source is same-origin and the samples are not tainted. Simplest option, no extra permissions.
+- **`AudioWorklet`** — `addModule()` with a `blob:` URL requires CSP allowances we do not want to grant. Locally-shipped worklet modules are possible but add a build artefact for no clear win.
+- **`captureStream()`** — blocked or silent for EME/DRM content, and `tabCapture` would widen permissions to whole-tab audio.
 
 ## Decision
-- **Chosen method:** `createMediaElementSource` from the `<video>` element.
-- **Fallback plan:** If a silent stream is detected (e.g., in a future YouTube update), the extension will fall back to using `AudioWorklet`. The fallback will be triggered only if the first 500 ms of audio samples are all zeros.
-- **Implementation notes:**
-  - The background script now attempts to create a `MediaElementAudioSourceNode` as soon as the content script injects the capture function.
-  - The audio graph is connected to a `ScriptProcessor` to collect samples. The graph is disconnected once the target duration (2 s) is reached.
-  - No changes are made to playback; the audio node is disconnected from the destination to avoid altering the volume.
-
-## Rationale
-`createMediaElementSource` satisfies the functional requirement, has the lowest surface area for bugs, and is fully supported in Chrome V3 extensions. The fallback to `AudioWorklet` provides a safety net without breaking the user experience.
+- Use `createMediaElementSource` from the `<video>` element.
+- **One** `AudioContext` and **one** `MediaElementAudioSourceNode` per `<video>` element, cached in a `WeakMap` (`packages/extension/content.ts`). Creating a second source for the same element throws `InvalidStateError` — this was a real bug in the previous implementation.
+- Connect the graph to `ctx.destination` so playback stays audible after the element is tapped.
+- Sample with an `AnalyserNode` (`fftSize = 2048`), polling `getFloatTimeDomainData` every ~40 ms for `ANALYSIS_MS = 6000`. The previous `ScriptProcessor(4096, 1, 1)` is deprecated and runs on the main thread.
+- A 500 ms silence guard that falls back to `AudioWorklet` was **proposed but is not implemented**; the code returns `null` when capture fails and the verdict then depends on the missing-modality policy.
 
 ## Status
-- **Implemented:** Capture logic in `packages/extension/background.js` and `packages/extension/content.ts`.
-- **Verified:** Live audio is captured from YouTube watch pages and Shorts; no audible side effects.
-- **Future work:** Add a silent-detection guard and switch to `AudioWorklet` if needed.
+- **Implemented:** `captureAudio()` in `packages/extension/content.ts`.
+- **Not verified:** no automated test asserts non-silent samples on a real watch page.
+- **Future work:** silence guard + worklet fallback; a fixture-driven capture test.

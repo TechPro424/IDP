@@ -1,5 +1,4 @@
 # GitHub Actions CI pipeline for Slop Filter
-# Triggers on pushes and pull requests to main and feature branches
 name: CI
 
 on:
@@ -19,110 +18,103 @@ jobs:
       matrix:
         node-version: [22.x]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
           version: 9
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: TypeScript type‑check
+      - name: TypeScript type-check
         run: pnpm exec tsc --noEmit
-        
-      - run: pnpm exec playwright install chromium --with-deps
 
       - name: Run unit tests
         run: pnpm test
 
+      # Plan §12 asks for a dependency audit in CI. Advisory, not gating: a new
+      # CVE upstream must not turn an unrelated PR red.
+      - name: Dependency audit (advisory)
+        continue-on-error: true
+        run: pnpm audit --audit-level high
+
       - name: Build extension
         run: pnpm -C packages/extension build
 
-      - name: Run e2e tests with Playwright
-        run: pnpm -C packages/extension test:e2e
+      - run: pnpm exec playwright install chromium --with-deps
+
+      # Content-script tests that need no extension host (run everywhere) and
+      # the extension-loading suite (needs the full Chromium, which a runner has).
+      - name: Run content-script tests
+        run: pnpm -C packages/extension exec playwright test
         env:
-          # Provide a dummy endpoint for the edge worker during e2e
-          BASE_URL: http://localhost:8787
+          SLOP_E2E_FULL: '1'
 
-      - name: Run dataset assembly script
-        run: bash packages/scripts/assemble-dataset.sh
+      # Browser-vs-Node feature parity (plan §7.1); bundles the library with Vite
+      # and compares against the Node CLI on the same WAV bytes.
+      - name: Run browser parity tests
+        run: pnpm exec playwright test --config packages/features/playwright.config.ts
 
-      - name: Run augmentation script
-        run: bash packages/scripts/augment-dataset.sh -c
+      - name: Install Python dependencies
+        run: pip install -r packages/scripts/requirements.txt
 
-      - name: Install Python dependencies for training
-        run: pip install -r requirements.txt
+      # The data scripts refuse to run without a real dataset. That refusal is
+      # the guarantee behind §14.5 (never invent measurements), so CI asserts it
+      # rather than working around it.
+      - name: Assert metrics scripts fail closed
+        run: |
+          set +e
+          bash packages/scripts/evaluate.sh -j && { echo "evaluate.sh emitted metrics without data"; exit 1; }
+          bash packages/scripts/compute-thresholds.sh && { echo "compute-thresholds.sh emitted thresholds without data"; exit 1; }
+          python3 packages/scripts/train-model.py && { echo "train-model.py trained without data"; exit 1; }
+          echo "all metrics scripts refused to run without data — correct"
 
-      - name: Train baseline model
-        run: python packages/scripts/train-model.py
-
-      - name: Export model weights
-        run: bash packages/scripts/export-models.sh
-
-      - name: Compute thresholds
-        run: bash packages/scripts/compute-thresholds.sh
-
-      - name: Run evaluation placeholder
-        run: bash packages/scripts/evaluate.sh -j
+      - name: Data pipeline (train, thresholds, evaluation)
+        if: hashFiles('packages/data/processed/train.csv') != ''
+        run: |
+          bash packages/scripts/assemble-dataset.sh
+          bash packages/scripts/augment-dataset.sh -c
+          python3 packages/scripts/train-model.py
+          bash packages/scripts/export-models.sh
+          bash packages/scripts/compute-thresholds.sh
+          bash packages/scripts/evaluate.sh -j
 
       - name: Upload evaluation report
-        if: success()
+        if: hashFiles('results/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: evaluation-report
           path: results/**
 
       - name: Upload extension build
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: extension-build
           path: packages/extension/dist/**
 
-  # Optional: test Edge worker locally via wrangler dev
   edge-test:
     runs-on: ubuntu-latest
     needs: build-and-test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
           version: 9
 
-      - name: Configure pnpm workspace root check
-        run: pnpm config set ignore-workspace-root-check true
+      - run: pnpm config set ignore-workspace-root-check true
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Setup Cloudflare Wrangler
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: packages/edge
-          packageManager: pnpm
-          command: --version
-
       - name: Run Edge worker tests
         run: pnpm -C packages/edge test
-
-# End of workflow

@@ -1,32 +1,24 @@
-# ADR 006: Spike C – Edge Storage Benchmark
+# ADR 006: Spike C — Edge Storage
 
 ## Context
-The edge worker must store Bloom filter entries and a small key‑value set of verdicts. Three storage back‑ends were considered:
-
-1. **Workers KV** – native Cloudflare KV with eventual consistency and a `cacheTtl` option.
-2. **Cache API** – the in‑memory cache that lives in the worker’s runtime.
-3. **Upstash Redis** – a managed Redis service accessed via HTTP.
-
-The goal was to compare cold‑start and warm‑read latencies for each backend to inform the production deployment choice.
+The edge worker stores one versioned Bloom blob and a small set of prefix buckets. Candidates: Workers KV, Cache API, Upstash Redis.
 
 ## Investigation
-| Backend | Warm Read (p50) | Warm Write (p50) | Notes |
-|---------|------------------|------------------|-------|
-| Workers KV | ~5 ms | ~6 ms | Reads are consistent after propagation (~1 min). Cache‑ttl can reduce latency for hot keys.
-| Cache API | ~1 ms | ~1 ms | Pure in‑memory; no cross‑worker persistence.
-| Upstash Redis | ~10 ms | ~12 ms | Network round‑trip; consistent latency.
+| Backend | Warm read | Notes |
+|---|---|---|
+| Workers KV | unmeasured | Durable, `cacheTtl` supported, eventual propagation |
+| Cache API | unmeasured | Per-colo in-memory; no cross-colo persistence |
+| Upstash Redis | unmeasured | Extra network hop + third-party processor disclosure |
 
-The benchmarks were run in a local Node environment using a `Map` to simulate KV and `Map` for Cache API; Upstash was not reachable, so we used an approximate number from a public benchmark.
+**These are not measurements.** The numbers published in the previous version of this ADR came from a local Node `Map` simulation; Upstash was never reachable and no deployment existed. They have been removed rather than restated.
 
 ## Decision
-- **Chosen storage:** Workers KV with `cacheTtl=60` to benefit from cached reads while keeping data durable.
-- **Fallback:** If latency spikes or propagation delays become a problem, we will switch to Cache API for hot keys and keep KV as the source of truth.
-- **Metric reporting:** The worker will expose a `/metrics` endpoint for real‑time monitoring of KV operation times.
-
-## Rationale
-Workers KV provides durable storage with minimal configuration and integrates directly with the Cloudflare Workers runtime. The measured warm‑read latency (~5 ms) is acceptable for a per‑video lookup, and the eventual consistency model is tolerable for the slop‑filter use case.
+- Workers KV as the source of truth, with `cacheTtl` (3600 s) on bucket reads.
+- Bloom blob served from a single versioned key (`slop-filter-bloom`) so a deploy is an atomic swap.
+- Cache API is not used; the KV edge cache already covers the hot path.
 
 ## Status
-- **Implemented:** Benchmark script (`packages/edge/scripts/benchmark-edge.js`) runs a local simulation and logs timings. In CI, the `performance.yml` workflow runs this script.
-- **Verified:** The script produces realistic timing numbers that match the benchmark table.
-- **Future work:** Replace the simulation with real Workers KV and Upstash calls in a staging environment.
+- **Implemented:** `packages/edge/handler.ts` reads KV from the Workers `env` binding (`c.env.KV`), not `globalThis`.
+- **Implemented:** `packages/edge/scripts/benchmark-edge.ts` (simulation) and `benchmark-edge-real.ts` (real origin, needs `EDGE_ORIGIN`).
+- **Not verified:** no latency figure in this repository is measured. `performance.yml` runs the simulation, so its output is not evidence either.
+- **Future work:** deploy to staging, run `benchmark-edge-real.ts` per region, cold and warm, and record the results with the date and commit.

@@ -9,11 +9,12 @@
   "scripts": {
     "build": "pnpm -F slop-filter-extension build && pnpm -F slop-filter-edge build",
     "lint": "tsc --noEmit",
-    "test": "node --loader ts-node/esm packages/features/tests/test.ts && node --loader ts-node/esm packages/features/tests/text.test.ts && node --loader ts-node/esm packages/features/tests/visual.test.ts && node --loader ts-node/esm packages/features/tests/integration.test.ts && node --loader ts-node/esm packages/edge/tests/handler.test.ts && node --loader ts-node/esm packages/edge/tests/kv.test.ts",
+    "test": "node --loader ts-node/esm packages/features/tests/test.ts && node --loader ts-node/esm packages/features/tests/text.test.ts && node --loader ts-node/esm packages/features/tests/visual.test.ts && node --loader ts-node/esm packages/features/tests/ffmpeg-cuts.test.ts && node --loader ts-node/esm packages/features/tests/hash.test.ts && node --loader ts-node/esm packages/features/tests/wav.test.ts && node --loader ts-node/esm packages/features/tests/config.test.ts && node --loader ts-node/esm packages/extension/tests/state.test.ts && node --loader ts-node/esm packages/features/tests/integration.test.ts && node --loader ts-node/esm packages/features/tests/parity.test.ts && node --loader ts-node/esm packages/scoring/tests/scoring.test.ts && node --loader ts-node/esm packages/edge/tests/bloom.test.ts && node --loader ts-node/esm packages/edge/tests/handler.test.ts && node --loader ts-node/esm packages/edge/tests/kv.test.ts && node --loader ts-node/esm packages/edge/tests/flow.test.ts",
     "pretest:e2e": "pnpm -F slop-filter-extension build",
     "test:e2e": "playwright test",
     "package:chrome": "pnpm -C packages/extension run package:chrome",
-    "package:firefox": "pnpm -C packages/extension run package:firefox"
+    "package:firefox": "pnpm -C packages/extension run package:firefox",
+    "test:browser": "pnpm -C packages/extension build && pnpm exec playwright test --config packages/features/playwright.config.ts && pnpm -C packages/extension exec playwright test"
   },
   "pnpm": {
     "overrides": {

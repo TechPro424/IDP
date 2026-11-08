@@ -1,7 +1,8 @@
 // Placeholder benchmark for Cloudflare Cache API.
 // In practice, this would hit the Cache API endpoint for GET/PUT.
 const N = 100;
-const baseUrl = process.env.BASE_URL || 'https://example.com';
+const baseUrl = process.env.BASE_URL;
+if (!baseUrl) { console.error('set BASE_URL to a real edge origin'); process.exit(1); }
 
 async function benchCacheGet(): Promise<void> {
   let total = 0;

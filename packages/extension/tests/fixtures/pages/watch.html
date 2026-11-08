@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mock YouTube watch page</title>
+    <script>
+      // The page is the fixture; the query string decides which variant we get.
+      const q = new URLSearchParams(location.search);
+      window.addEventListener('DOMContentLoaded', () => {
+        document.body.setAttribute('data-variant', [...q.keys()].join(',') || 'plain');
+      });
+      document.addEventListener('DOMContentLoaded', () => {
+        const player = document.querySelector('#movie_player');
+        if (q.has('ad')) player.classList.add('ad-showing');
+      });
+    </script>
+    <style>
+      body { margin: 0; background: #0f0f0f; color: #eee; font: 14px system-ui; }
+      #movie_player { width: 640px; height: 360px; background: #000; }
+      video { width: 640px; height: 360px; }
+    </style>
+  </head>
+  <body>
+    <div id="movie_player" class="html5-video-player">
+      <!-- Removed for the "no video element" variant so we can assert silence. -->
+      <video id="v" src="/test-media/tone-cuts.webm" autoplay loop playsinline></video>
+      <div class="ytp-caption-window-container">
+        <span class="ytp-caption-segment">and then we go and then we go and then we go</span>
+        <span class="ytp-caption-segment">so the thing is the thing is the thing is the thing</span>
+        <span class="ytp-caption-segment">and then we go and then we go and then we go</span>
+        <span class="ytp-caption-segment">okay so right so right so right so right so right</span>
+        <span class="ytp-caption-segment">and then we go and then we go and then we go</span>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search);
+      if (params.has('novideo')) document.querySelector('video')?.remove();
+      if (params.has('muted')) document.querySelector('video').muted = true;
+    </script>
+  </body>
+</html>

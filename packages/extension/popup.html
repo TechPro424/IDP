@@ -4,21 +4,19 @@
   <meta charset="utf-8" />
   <title>Slop Filter</title>
   <style>
-    body {font-family: Arial, sans-serif; margin: 0; padding: 10px;}
-    label {display: block; margin-bottom: 8px;}
-    button {margin-top: 8px;}
+    body {font-family: system-ui, Arial, sans-serif; margin: 0; padding: 12px; width: 240px;}
+    label {display: block; margin-bottom: 10px;}
+    button {width: 100%; margin-top: 8px; padding: 6px;}
+    a {display: inline-block; margin-top: 10px;}
+    #status {color:#555; font-size: 12px; min-height: 16px;}
   </style>
 </head>
 <body>
   <label>
     <input type="checkbox" id="enable" aria-label="Enable filter" /> Enable filter
   </label>
-  <label>
-    Prefix to block: <input type="text" id="prefix" aria-label="Prefix to block" />
-  </label>
-  <button id="addBtn" aria-label="Add to Bloom Filter">Add to Bloom Filter</button>
-  <button id="bloomBtn" aria-label="Trigger Bloom POST">Trigger Bloom POST</button>
-  <br/>
+  <button id="analyzeBtn" aria-label="Analyze this video">Analyze this video</button>
+  <p id="status" role="status" aria-live="polite"></p>
   <a href="options.html" target="_blank" aria-label="Settings page">Settings</a>
   <script type="module" src="popup.ts"></script>
 </body>

@@ -1,13 +1,11 @@
-// Cloudflare Worker entry point
-addEventListener('fetch', (event: any) => {
-  event.respondWith(handleRequest(event.request));
-});
+// Cloudflare Worker entry point (module syntax).
+// The Hono app from handler.ts is the actual request handler.
+import { createApp, type Env } from './handler.js';
 
-async function handleRequest(request: Request): Promise<Response> {
-  return new Response('Hello from Slop Filter Edge', {
-    status: 200,
-    headers: { 'content-type': 'text/plain' },
-  });
-}
+const app = createApp();
 
-export { handleRequest };
+export default {
+  fetch: app.fetch,
+};
+
+export type { Env };

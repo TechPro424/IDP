@@ -1,39 +1,42 @@
-import { Hono } from 'hono';
+import { createApp, type KVStore, type Env } from '../handler.js';
+import { BloomFilter } from '../bloomFilter.js';
+import { BUCKET_PAD, bloomKey, bucketKey, emptyBucket } from '../keys.js';
 
-// Mock KV namespace
-const kvStore = new Map<string, string>();
-(globalThis as any).KV_NAMESPACE = {
-  get: async (key: string) => kvStore.get(key),
-  put: async (key: string, value: string) => { kvStore.set(key, value); },
-  delete: async (key: string) => { kvStore.delete(key); },
-};
+function mockKV() {
+  const store = new Map<string, any>();
+  const kv: KVStore = {
+    async get(key) { return store.get(key); },
+    async put(key, value, _options) { store.set(key, value); },
+    async delete(key) { store.delete(key); },
+  };
+  return { kv, store };
+}
 
-// Recreate the handler logic from handler.ts
-const app = new Hono();
-app.get('/v1/bucket/:prefix', async (c) => {
-  const prefix = c.req.param('prefix');
-  const verdict = (await (globalThis as any).KV_NAMESPACE.get(prefix)) === 'true' ? 'BLOCK' : 'ALLOW';
-  return c.json({ verdict });
-});
-app.post('/v1/bucket/:prefix', async (c) => {
-  const prefix = c.req.param('prefix');
-  await (globalThis as any).KV_NAMESPACE.put(prefix, 'true');
-  return c.json({ status: 'added' });
-});
+const app = createApp();
 
 (async () => {
-  // Ensure prefix not present initially
-  const res1 = await app.request('/v1/bucket/test-prefix', { method: 'GET' });
-  const body1 = await res1.json();
-  if (body1.verdict !== 'ALLOW') throw new Error('Expected ALLOW before add');
+  const { kv, store } = mockKV();
+  const env: Env = { KV: kv, BLOOM_VERSION: 'kv-test' };
+  const suffix = 'fffffffffff';
 
-  const res2 = await app.request('/v1/bucket/test-prefix', { method: 'POST' });
-  const body2 = await res2.json();
-  if (body2.status !== 'added') throw new Error('Expected added status');
+  // The publisher writes the bucket and the Bloom blob straight to KV; the
+  // worker only ever reads them.
+  const bucket = emptyBucket('kv-test');
+  bucket.entries = [{ s: suffix, d: 2, c: 100 }];
+  store.set(bucketKey('abcdef01'), JSON.stringify(bucket));
+  const filter = new BloomFilter({ expectedItems: 100, falsePositiveRate: 0.001 });
+  filter.add(`abcdef01${suffix}`);
+  store.set(bloomKey('kv-test'), filter.toBinary());
 
-  const res3 = await app.request('/v1/bucket/test-prefix', { method: 'GET' });
-  const body3 = await res3.json();
-  if (body3.verdict !== 'BLOCK') throw new Error('Expected BLOCK after add');
+  const res = await app.request('/v1/bucket/abcdef01', {}, env);
+  const body = await res.json();
+  if (body.entries.length !== BUCKET_PAD) throw new Error(`KV bucket not padded: ${body.entries.length}`);
+  if (!body.entries.some((e: any) => e.s === suffix && e.d === 2)) throw new Error('KV did not persist the suffix');
+
+  // Bloom blob round-trips through binary serialisation.
+  const bloomRes = await app.request('/v1/bloom/latest', {}, env);
+  const served = BloomFilter.fromBinary(new Uint8Array(await bloomRes.arrayBuffer()));
+  if (!served.test(`abcdef01${suffix}`)) throw new Error('Bloom blob missing inserted key');
 
   console.log('KV integration test passed');
 })();

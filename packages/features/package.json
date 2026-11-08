@@ -5,7 +5,9 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "echo 'build features (placeholder)'",
-    "test": "node --loader ts-node/esm tests/test.ts"
+    "test": "node --loader ts-node/esm tests/test.ts",
+    "test:browser": "playwright test",
+    "bundle:parity": "node scripts/build-parity-bundle.mjs"
   },
   "devDependencies": {
     "fft-js": "^0.0.12",
