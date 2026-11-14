@@ -23,6 +23,7 @@ export interface FeatureResult {
 
 /**
  * Extract the full feature vector.
+ * @param input of type {Float32Array, number, number}
  * @param frames optional sequence of ImageData-like frames for visual analysis
  * @param text optional caption/transcript text
  */
