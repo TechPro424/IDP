@@ -1,13 +1,15 @@
-// Text feature extraction utilities
+// Text feature extraction utilities. Browser-safe: uses the platform
+// CompressionStream instead of node:zlib.
+import { variance } from './audio.js';
 
 export interface TextFeatures {
   tokenEntropy?: number;
   typeTokenRatio?: number;
   repeatedNgramRatio?: number;
   gzipRatio?: number;
+  sentenceLengthVariance?: number;
 }
 
-// Helper: simple tokenization by whitespace and punctuation
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -17,53 +19,52 @@ function tokenize(text: string): string[] {
     .filter(Boolean);
 }
 
-export function extractTextFeatures(text: string): TextFeatures {
+async function gzipRatio(text: string): Promise<number> {
+  try {
+    const bytes = new TextEncoder().encode(text);
+    if (!bytes.length) return 0;
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    return buf.byteLength / bytes.byteLength;
+  } catch {
+    return 0;
+  }
+}
+
+export async function extractTextFeatures(text: string): Promise<TextFeatures> {
   const tokens = tokenize(text);
   if (tokens.length === 0) return {};
   const totalTokens = tokens.length;
-  const uniqueTokens = new Set(tokens).size;
-  const typeTokenRatio = uniqueTokens / totalTokens;
+  const typeTokenRatio = new Set(tokens).size / totalTokens;
 
-  // Entropy calculation (base 2)
   const freq = new Map<string, number>();
-  for (const t of tokens) {
-    freq.set(t, (freq.get(t) ?? 0) + 1);
-  }
+  for (const t of tokens) freq.set(t, (freq.get(t) ?? 0) + 1);
   let entropy = 0;
-  for (const [_, c] of freq) {
+  for (const c of freq.values()) {
     const p = c / totalTokens;
     entropy -= p * Math.log2(p);
   }
 
-  // 3-gram repetition ratio
   const ngramSize = 3;
-  const ngrams = [] as string[];
+  const ngrams: string[] = [];
   for (let i = 0; i <= tokens.length - ngramSize; i++) {
     ngrams.push(tokens.slice(i, i + ngramSize).join(' '));
   }
   const ngramFreq = new Map<string, number>();
-  for (const g of ngrams) {
-    ngramFreq.set(g, (ngramFreq.get(g) ?? 0) + 1);
-  }
-  const repeated = Array.from(ngramFreq.values()).filter(c => c > 1).length;
+  for (const g of ngrams) ngramFreq.set(g, (ngramFreq.get(g) ?? 0) + 1);
+  const repeated = Array.from(ngramFreq.values()).filter((c) => c > 1).length;
   const repeatedNgramRatio = ngrams.length > 0 ? repeated / ngrams.length : 0;
 
-  // Gzip ratio
-  let gzipRatio = 0;
-  try {
-    // Node's zlib is available in the test environment
-    const zlib = require('zlib');
-    const buffer = Buffer.from(text, 'utf8');
-    const compressed = zlib.deflateSync(buffer);
-    gzipRatio = compressed.length / buffer.length;
-  } catch (_) {
-    gzipRatio = 0;
-  }
+  const sentences = text
+    .split(/[.!?]+/)
+    .map((s) => tokenize(s).length)
+    .filter((n) => n > 0);
 
   return {
     tokenEntropy: entropy,
     typeTokenRatio,
     repeatedNgramRatio,
-    gzipRatio,
+    gzipRatio: await gzipRatio(text),
+    sentenceLengthVariance: variance(sentences),
   };
 }

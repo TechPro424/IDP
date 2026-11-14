@@ -1,7 +1,8 @@
 {
   "name": "slop-filter-scoring",
+  "type": "module",
   "version": "0.1.0",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "build": "tsc"
   },

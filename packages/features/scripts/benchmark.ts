@@ -1,9 +1,9 @@
-import { extractFeatures, AudioInput } from '../src/index';
-import fs from 'fs';
-import path from 'path';
+import { extractFeatures, AudioInput } from '../src/index.js';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // Simple benchmark: read a sample WAV (mono 16k) and run feature extraction
-const samplePath = path.resolve(__dirname, '..', 'tests', 'sample.wav');
+const samplePath = fileURLToPath(new URL('../tests/sample.wav', import.meta.url));
 if (!fs.existsSync(samplePath)) {
   console.warn('Sample WAV not found, skipping benchmark');
   process.exit(0);
@@ -17,6 +17,6 @@ for (let i = 0; i < samples.length; i++) {
 }
 const input: AudioInput = { data: float32, sampleRate: 16000 };
 console.time('extractFeatures');
-const result = extractFeatures(input);
+const result = await extractFeatures(input);
 console.timeEnd('extractFeatures');
 console.log('Result', JSON.stringify(result, null, 2));

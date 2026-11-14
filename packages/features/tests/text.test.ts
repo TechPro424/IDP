@@ -1,11 +1,15 @@
-import { extractTextFeatures } from '../src/text';
+import { extractTextFeatures } from '../src/text.js';
 
-// Simple test
-const text = 'Hello world! Hello again. Test test test.';
-const features = extractTextFeatures(text);
-console.log('Text features:', features);
-if (features.tokenEntropy === undefined) throw new Error('tokenEntropy missing');
-if (features.typeTokenRatio === undefined) throw new Error('typeTokenRatio missing');
-if (features.repeatedNgramRatio === undefined) throw new Error('repeatedNgramRatio missing');
-if (features.gzipRatio === undefined) throw new Error('gzipRatio missing');
-console.log('Text test passed.');
+(async () => {
+  const text = 'Hello world! Hello again. Test test test.';
+  const features = await extractTextFeatures(text);
+  console.log('Text features:', features);
+  for (const key of ['tokenEntropy', 'typeTokenRatio', 'repeatedNgramRatio', 'gzipRatio', 'sentenceLengthVariance'] as const) {
+    if (features[key] === undefined) throw new Error(`${key} missing`);
+  }
+  if (features.gzipRatio! <= 0) throw new Error('gzipRatio should be positive for non-empty text');
+
+  const empty = await extractTextFeatures('   ');
+  if (Object.keys(empty).length !== 0) throw new Error('Empty text should yield no features');
+  console.log('Text test passed.');
+})();

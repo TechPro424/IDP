@@ -4,27 +4,68 @@
   <meta charset="utf-8" />
   <title>Slop Filter Options</title>
   <style>
-    body{font-family:Arial,sans-serif;margin:20px;}
+    body{font-family:system-ui,Arial,sans-serif;margin:20px;max-width:680px;line-height:1.5;}
+    fieldset{margin-top:16px;border:1px solid #ccc;border-radius:8px;}
     label{display:block;margin-top:10px;}
-    textarea{width:100%;height:80px;}
+    textarea{width:100%;height:70px;}
+    .hint{color:#666;font-size:12px;margin:2px 0 0;}
     button{margin-top:10px;}
+    output{margin-left:6px;font-variant-numeric:tabular-nums;}
+    input[type=range]{vertical-align:middle;width:240px;}
+    @media (prefers-contrast: more){.hint{color:#333;}fieldset{border-width:2px;}}
+    @media (forced-colors: active){fieldset{border:1px solid CanvasText;}}
   </style>
 </head>
 <body>
   <h1>Slop Filter Settings</h1>
-  <label>Slop Threshold (0–1):
-    <input type="number" id="threshold" min="0" max="1" step="0.01" value="0.5" />
-  </label>
-  <label>Allowlist (comma‑separated URLs):
-    <textarea id="allowlist"></textarea>
-  </label>
-  <label>Denylist (comma‑separated URLs):
-    <textarea id="denylist"></textarea>
-  </label>
-  <label><input type="checkbox" id="annotation" /> Enable Annotation Mode</label>
-  <button id="saveBtn">Save Settings</button>
-  <button id="deleteBtn">Delete All Stored Data</button>
-<button id="exportBtn">Export Annotations</button>
-  <script src="options.js"></script>
+
+  <fieldset>
+    <legend>Consent</legend>
+    <p>Slop Filter analyses video locally on your device. When an edge origin is set below, only a 5-character hash prefix is sent — never the URL or the video id.</p>
+    <label><input type="checkbox" id="consent" aria-label="I understand and consent" /> I understand and consent to local analysis</label>
+    <label><input type="checkbox" id="enabled" aria-label="Enable the filter" /> Enable the filter</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Detection</legend>
+    <label>Sensitivity — synthetic-narration threshold (τS): <input type="range" id="tauS" min="0" max="1" step="0.05" aria-label="tau S" /> <output id="tauS-value" for="tauS"></output></label>
+    <label>Sensitivity — slop-dimension threshold (τH): <input type="range" id="tauH" min="0" max="1" step="0.05" aria-label="tau H" /> <output id="tauH-value" for="tauH"></output></label>
+    <label>Gray band (± advisory zone): <input type="range" id="grayBand" min="0" max="0.5" step="0.05" aria-label="gray band" /> <output id="grayBand-value" for="grayBand"></output></label>
+    <label>Missing-modality policy:
+      <select id="missingModalityPolicy" aria-label="Missing modality policy">
+        <option value="suspend">suspend (review)</option>
+        <option value="treat_safe">treat_safe (allow)</option>
+        <option value="treat_risky">treat_risky (review)</option>
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Edge corroboration (optional)</legend>
+    <label>Edge origin:
+      <input type="url" id="edgeOrigin" placeholder="https://slop-edge.example.workers.dev" aria-label="Edge origin" />
+      <p class="hint">Leave empty for fully offline operation. Saving an origin asks for host permission.</p>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Lists (host suffixes, comma-separated)</legend>
+    <label>Allowlist:<textarea id="allowlist" aria-label="Allowlist hosts"></textarea></label>
+    <label>Denylist:<textarea id="denylist" aria-label="Denylist hosts"></textarea></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Annotation</legend>
+    <label><input type="checkbox" id="annotationConsent" aria-label="Consent to annotation" /> I consent to storing annotation data locally</label>
+    <label><input type="checkbox" id="annotation" aria-label="Enable Annotation Mode" /> Enable Annotation Mode</label>
+    <label><input type="checkbox" id="reduceMotion" aria-label="Reduce motion" /> Reduce motion in the overlay</label>
+  </fieldset>
+
+  <button id="saveBtn" aria-label="Save Settings">Save Settings</button>
+  <button id="deleteBtn" aria-label="Delete All Stored Data">Delete All Stored Data</button>
+  <button id="exportBtn" aria-label="Export Annotations">Export Annotations</button>
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <script type="module" src="options.ts"></script>
 </body>
 </html>

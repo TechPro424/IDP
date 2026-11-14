@@ -1,15 +1,21 @@
 {
   "name": "slop-filter-extension",
+  "type": "module",
   "version": "0.1.0",
   "main": "background.js",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build --mode content && vite build --mode pages",
+    "pretest:e2e": "pnpm run build",
     "test:e2e": "playwright test",
-    "package:chrome": "zip -r dist_chrome.zip -j dist",
-    "package:firefox": "zip -r dist_firefox.zip -j dist"
+    "package:chrome": "pnpm run build && rm -f dist_chrome.zip && cd dist && zip -qr ../dist_chrome.zip .",
+    "package:firefox": "pnpm run build && node scripts/build-firefox.mjs && rm -f dist_firefox.zip && cd dist-firefox && zip -qr ../dist_firefox.zip .",
+    "postbuild": "node scripts/check-bundle.mjs",
+    "build:firefox": "node scripts/build-firefox.mjs"
   },
   "dependencies": {
-    "slop-filter-features": "workspace:*"
+    "slop-filter-bloom": "workspace:*",
+    "slop-filter-features": "workspace:*",
+    "slop-filter-scoring": "workspace:*"
   },
   "devDependencies": {}
 }

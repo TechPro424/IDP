@@ -1,13 +1,16 @@
 {
   "name": "slop-filter-features",
+  "type": "module",
   "version": "0.1.0",
   "main": "src/index.ts",
   "scripts": {
     "build": "echo 'build features (placeholder)'",
-    "test": "ts-node tests/test.ts"
+    "test": "node --loader ts-node/esm tests/test.ts",
+    "test:browser": "playwright test",
+    "bundle:parity": "node scripts/build-parity-bundle.mjs"
   },
   "devDependencies": {
-    "fft-js": "^2.0.0",
+    "fft-js": "^0.0.12",
     "meyda": "^3.0.0",
     "ts-node": "^10.9.2"
   }

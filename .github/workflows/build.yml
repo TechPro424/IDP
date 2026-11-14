@@ -8,14 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
       - uses: pnpm/action-setup@v2
         with:
           version: 9
-      - run: pnpm install
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm test
+      - name: Build extension
+        run: pnpm -C packages/extension build
+      - run: pnpm exec playwright install chromium --with-deps
       - run: pnpm test:e2e
-+      # Package Chrome and Firefox extensions
-+      - name: Build Chrome package
-+        run: pnpm run package:chrome
-+      - name: Build Firefox package
-+        run: pnpm run package:firefox
+      # Package Chrome and Firefox extensions
+      - name: Build Chrome package
+        run: pnpm run package:chrome
+      - name: Build Firefox package
+        run: pnpm run package:firefox

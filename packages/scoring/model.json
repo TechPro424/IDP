@@ -1,0 +1,16 @@
+{
+  "coefficients": {
+    "S": 0.8,
+    "H": 0.6,
+    "SH": 0.4
+  },
+  "intercept": -0.5,
+  "calibration": "none",
+  "ece": null,
+  "seed": null,
+  "nTrain": 0,
+  "nVal": 0,
+  "trainedAt": null,
+  "featureOrder": ["S", "H", "S*H"],
+  "note": "PRIOR, NOT A FITTED MODEL. These are the hand-set defaults mirrored in packages/scoring/src/model.ts so the pipeline can run before any labelled data exists. Overwrite by running packages/scripts/train-model.py on a real, generator/speaker-disjoint split."
+}

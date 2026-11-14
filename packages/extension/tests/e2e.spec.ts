@@ -1,51 +1,44 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
-// End‑to‑end test for the Slop Filter extension
-// Verifies popup UI and that network calls are made.
+// Same constraint as content.spec.ts: the extension fixtures need a Chromium
+// that can load unpacked extensions.
+test.skip(process.env.SLOP_E2E_FULL !== '1', 'set SLOP_E2E_FULL=1 to run against a loaded extension');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-test('extension popup UI and network calls', async ({ page }) => {
-  // Intercept network requests to the fake backend
-  const bucketRequests: string[] = [];
-  await page.route('https://example.com/v1/bucket/*', async route => {
-    const req = route.request();
-    if (req.method() === 'POST') {
-      bucketRequests.push('POST:' + req.url());
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'added' }) });
-    } else {
-      bucketRequests.push('GET:' + req.url());
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ verdict: 'ALLOW' }) });
-    }
-  });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-  // Open a page to trigger the extension icon
-  await page.goto('https://example.com');
+// End-to-end checks for the local-first extension: opt-in gating, local
+// persistence, and the absence of any hard-coded network origin.
 
-  // Click the extension icon to open popup
-  const extensionIcon = await page.getByLabel('Slop Filter');
-  await expect(extensionIcon).toBeVisible();
-  await extensionIcon.click();
+test('popup refuses to enable the filter without consent', async ({ page, extensionId }) => {
+  await page.goto(`chrome-extension://${extensionId}/popup.html`);
 
-  // Wait for popup to appear
-  const enableCheckbox = await page.getByLabel('Enable filter');
-  await expect(enableCheckbox).toBeVisible();
+  const enable = page.getByLabel('Enable filter');
+  await expect(enable).toBeVisible();
+  await expect(enable).not.toBeChecked();
 
-  // Interact with UI elements
-  const prefixInput = page.locator('#prefix');
-  await prefixInput.fill('test-prefix');
+  await enable.check();
+  await expect(page.locator('#status')).toContainText('consent');
+  await expect(enable).not.toBeChecked();
+});
 
-  const addBtn = page.locator('#addBtn');
-  await addBtn.click();
+test('options page stores settings locally and persists them', async ({ page, extensionId }) => {
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
 
-  // Wait for the POST request to be recorded
-  await page.waitForTimeout(500);
+  await page.getByLabel('I understand and consent').check();
+  await page.getByLabel('Enable the filter').check();
+  await page.getByLabel('Save Settings').click();
+  await expect(page.locator('#status')).toHaveText('Settings saved.');
 
-  expect(bucketRequests).toContain('POST:https://example.com/v1/bucket/test-prefix');
+  await page.reload();
+  await expect(page.getByLabel('I understand and consent')).toBeChecked();
+  await expect(page.getByLabel('Enable the filter')).toBeChecked();
+});
 
-  // Click Bloom POST button
-  const bloomBtn = page.locator('#bloomBtn');
-  await bloomBtn.click();
-
-  await page.waitForTimeout(500);
-
-  expect(bucketRequests).toContain('POST:https://example.com/v1/bucket/test-prefix');
+test('manifest requests no third-party host permissions', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../dist/manifest.json'), 'utf8'));
+  expect(manifest.host_permissions).toEqual(['https://www.youtube.com/*']);
+  expect(manifest.permissions).not.toContain('tabCapture');
 });

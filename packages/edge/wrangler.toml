@@ -1,0 +1,31 @@
+name = "slop-filter-edge"
+main = "index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Local development values. BLOOM_* can be overridden per environment.
+[vars]
+BLOOM_VERSION = "model-0"
+BLOOM_EXPECTED_ITEMS = "10000"
+BLOOM_FPR = "0.001"
+
+# Verdict buckets + Bloom blob. Replace the id with your namespace id
+# (`wrangler kv namespace create SLOP_FILTER`).
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Per-IP rate limiting (plan §7.3: "rate limiting via Cloudflare rules, not stored
+# per-user state"). The binding is optional in code: without it the worker serves
+# every request. Requires wrangler >= 4.36.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+[observability]
+enabled = false

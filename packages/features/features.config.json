@@ -1,0 +1,23 @@
+{
+  "audio": {
+    "frameSize": 2048,
+    "hopSize": 512,
+    "rmsThreshold": 0.05,
+    "minPauseMs": 200,
+    "minSpeechSeconds": 5,
+    "labSampleRate": 48000
+  },
+  "visual": {
+    "downsampleWidth": 64,
+    "downsampleHeight": 36,
+    "minShotLengthFrames": 3,
+    "shotThresholdSigma": 3,
+    "shotAbsFloor": 12,
+    "adaptiveAlpha": 0.1,
+    "histogramBins": 8
+  },
+  "hashing": {
+    "prefixLength": 5,
+    "suffixLength": 11
+  }
+}
